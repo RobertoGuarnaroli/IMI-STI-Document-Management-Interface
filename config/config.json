@@ -1,0 +1,19 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "document-management-interface-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/documentManagementInterface/DocumentManagementInterfaceWebPart.js",
+          "manifest": "./src/webparts/documentManagementInterface/DocumentManagementInterfaceWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "DocumentManagementInterfaceWebPartStrings": "lib/webparts/documentManagementInterface/loc/{locale}.js",
+    "ControlStrings": "node_modules/@pnp/spfx-controls-react/lib/loc/{locale}.js"
+  }
+}

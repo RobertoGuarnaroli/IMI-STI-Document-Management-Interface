@@ -1,0 +1,18 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.listContainer {
+  box-shadow: 0 2px 8px rgba(68,31,83,0.08);
+  border: 1px solid #e1d8f1;
+  border-radius: 16px;
+  padding: 20px;
+  min-height: 48px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: auto;
+}

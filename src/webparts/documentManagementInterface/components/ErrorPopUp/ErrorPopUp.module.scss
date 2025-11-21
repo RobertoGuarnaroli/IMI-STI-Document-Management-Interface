@@ -1,0 +1,43 @@
+.errorPopUp {
+  position: fixed;
+  top: 32px;
+  right: 32px;
+  background: #fff4f4;
+  color: #c50f1f;
+  border: 1.5px solid #c50f1f;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(197, 15, 31, 0.12);
+  padding: 16px 32px 16px 20px;
+  font-size: 1.08rem;
+  font-weight: 500;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  animation: errorFadeIn 0.3s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #c50f1f;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: color 0.2s;
+}
+.closeBtn:hover {
+  color: #a00c18;
+}
+
+@keyframes errorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

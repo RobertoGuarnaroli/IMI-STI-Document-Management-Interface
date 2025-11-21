@@ -1,0 +1,140 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
+// Forza la larghezza massima delle zone SharePoint
+:global {
+  #workbenchPageContent,
+  .CanvasComponent.LCS .CanvasZone {
+    max-width: 100% !important;
+  }
+
+  .CanvasZone {
+    max-width: 100% !important;
+  }
+
+  .ControlZone {
+    max-width: 100% !important;
+  }
+
+  .CanvasSection--read {
+    max-width: 100% !important;
+  }
+}
+
+/* Scrollbar globale (Chrome, Safari, Edge) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 2px;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: rgba(68, 31, 83, 0.3);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all 0.2s ease;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background: rgba(68, 31, 83, 0.5);
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-thumb:active,
+body::-webkit-scrollbar-thumb:active {
+  background: rgba(68, 31, 83, 0.7);
+  background-clip: padding-box;
+}
+
+/* Firefox */
+html,
+body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(68, 31, 83, 0.3) transparent;
+}
+
+/* Scrollbar per containers specifici (listContainer, modalContainer, ecc.) */
+.listContainer,
+.modalContainer,
+.mainContent {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(68, 31, 83, 0.2);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: all 0.2s ease;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(68, 31, 83, 0.4);
+    background-clip: padding-box;
+  }
+
+  &::-webkit-scrollbar-thumb:active {
+    background: rgba(68, 31, 83, 0.6);
+    background-clip: padding-box;
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: rgba(68, 31, 83, 0.2) transparent;
+}
+
+// Scrollbar per il modal (ancora più sottile e discreta)
+.modalContainer {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(68, 31, 83, 0.15);
+    border-radius: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(68, 31, 83, 0.3);
+  }
+}
+
+.documentManagementInterface {
+  overflow: hidden;
+  padding: 1em;
+  color: "[theme:bodyText, default: #323130]";
+  color: var(--bodyText);
+  display: flex;
+  flex-direction: row;
+  gap:16px;
+  border-radius: 16px;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
+  border: 1px solid #e1d8f1;
+  border-radius: 16px;
+}

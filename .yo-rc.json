@@ -1,0 +1,18 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "22.20.0",
+    "sdksVersions": {},
+    "version": "1.21.1",
+    "libraryName": "document-management-interface",
+    "libraryId": "8aafec10-793e-4e34-b7b6-59ef883792ef",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionName": "document-management-interface",
+    "solutionShortDescription": "document-management-interface description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "componentType": "webpart"
+  }
+}

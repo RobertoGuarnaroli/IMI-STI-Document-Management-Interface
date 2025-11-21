@@ -1,0 +1,77 @@
+// Modal Overlay
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(40, 20, 60, 0.25);
+  z-index: 1000;
+  transition: background 0.3s;
+}
+
+// Modal Wrapper - centra il contenuto
+.modalWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1010;
+  pointer-events: none;
+}
+
+// Modal Content
+.modalContainer {
+  background: linear-gradient(135deg, #fff 80%, #f3e6fa 100%);
+  box-shadow: 0 8px 32px rgba(68, 31, 83, 0.18), 0 1.5px 8px rgba(68, 31, 83, 0.10);
+  border-radius: 18px;
+  padding: 32px 28px 24px 28px;
+  min-width: 340px;
+  max-width: 540px;
+  width: 100%;
+  pointer-events: auto;
+  animation: modalFadeIn 0.35s cubic-bezier(0.4, 0.2, 0.2, 1);
+  position: relative;
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 18px;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #441f53;
+    letter-spacing: 0.5px;
+  }
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+// Animazioni
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Optional: add a subtle border or accent
+.modalContainer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  border: 1.5px solid #e2d6f3;
+  pointer-events: none;
+}
