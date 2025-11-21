@@ -96,6 +96,37 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
         }
     };
 
+    const handleDeleteProject = async (id: number) => {
+        setSaving(true);
+        try {
+            const service = new ProjectsService(context);
+            await service.deleteProject(id);
+            // Aggiorna la lista dopo l'eliminazione
+            const data = await service.getProjects();
+            const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
+            const mapped: IProjectItem[] = data.map((item) => ({
+                ProjectCode: item.ProjectCode || '',
+                Title: item.Title || '',
+                Customer: item.Customer || '',
+                ProjectManager: item.ProjectManager?.Title || '',
+                Status: item.Status || '',
+                StartDate: item.StartDate || '',
+                EndDate: item.EndDate || '',
+                Notes: item.Notes ? stripHtml(item.Notes) : '',
+                Modified: item.Modified || '',
+                Created: item.Created || '',
+                CreatedBy: item.Author?.Title || '',
+                ModifiedBy: item.Editor?.Title || '',
+                context: context
+            }));
+            setItems(mapped);
+        } catch {
+            // TODO: gestione errore
+        } finally {
+            setSaving(false);
+        }
+    };
+
     React.useEffect(() => {
         const fetchProjects = async (): Promise<void> => {
             try {
@@ -103,6 +134,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                 const data = await service.getProjects();
                 const stripHtml = (html: string) => html.replace(/<[^>]+>/g, '').trim();
                 const mapped: IProjectItem[] = data.map((item) => ({
+                    Id: item.Id,
                     ProjectCode: item.ProjectCode || '',
                     Title: item.Title || '',
                     Customer: item.Customer || '',
@@ -189,11 +221,37 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                 buttons={[
                     {
                         key: 'addProject',
-                        text: 'Nuovo Project',
+                        text: 'New Project',
                         iconName: 'Add',
                         onClick: () => setIsModalOpen(true),
                         disabled: false,
                         color: '#5a2a6b'
+                    },
+                    {
+                        key: 'deleteProject',
+                        text: 'Delete Project',
+                        iconName: 'Delete',
+                        onClick: () => {
+                            const selectedRows = items.filter(item => item.isSelected);
+                            if (selectedRows.length === 0) {
+                                setFormError('Seleziona almeno un progetto da eliminare.');
+                                setShowError(true);
+                                return;
+                            }
+                            Promise.all(selectedRows.map(async (item) => {
+                                if (item.Id) {
+                                    await handleDeleteProject(item.Id);
+                                }
+                            })).then(() => {
+                                setShowError(false);
+                            }).catch(() => {
+                                setFormError('Errore durante l\'eliminazione dei progetti.');
+                                setShowError(true);
+                            });
+                        },
+                        disabled: false,
+                        color: '#a4262c',
+                        visible: items.some(item => item.isSelected)
                     }
                 ]}
             />
@@ -218,8 +276,8 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                     saving={saving}
                 >
                     <TextField label="Project Code" value={newProject.ProjectCode} onChange={(_, v) => setNewProject(p => ({ ...p, ProjectCode: v || '' }))} required />
-                    <TextField label="Title" value={newProject.Title} onChange={(_, v) => setNewProject(p => ({ ...p, Title: v || '' }))} required/>
-                    <TextField label="Customer" value={newProject.Customer} onChange={(_, v) => setNewProject(p => ({ ...p, Customer: v || '' }))} required/>
+                    <TextField label="Title" value={newProject.Title} onChange={(_, v) => setNewProject(p => ({ ...p, Title: v || '' }))} required />
+                    <TextField label="Customer" value={newProject.Customer} onChange={(_, v) => setNewProject(p => ({ ...p, Customer: v || '' }))} required />
                     <Dropdown
                         label="Status"
                         options={statusOptions}

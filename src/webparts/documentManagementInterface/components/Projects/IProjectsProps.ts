@@ -3,6 +3,7 @@ export interface IProjectsProps {
 }
 
 export interface IProjectItem{
+    Id?: number;
 	ProjectCode?: string;
     Title?: string;
     Customer?: string;
@@ -16,4 +17,5 @@ export interface IProjectItem{
     CreatedBy?: string;
     ModifiedBy?: string;
     context: unknown;
+    isSelected?: boolean;
 }

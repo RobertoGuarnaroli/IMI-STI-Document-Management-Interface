@@ -4,10 +4,22 @@ import type { ISidebarProps } from './ISidebarProps';
 import projectConfig from '../../../../config/projectConfig';
 import { Icon } from '@fluentui/react/lib/Icon';
 
-export const Sidebar: React.FC<ISidebarProps> = ({ isVisible, selectedTab, onTabChange }) => {
+export const Sidebar: React.FC<ISidebarProps> = ({ isVisible, selectedTab, onTabChange, onClose }) => {
     const sidebarClass = `${styles.sidebar} ${isVisible ? styles.visible : styles.hidden}`;
+
     return (
         <div className={sidebarClass}>
+            {/* Close button per mobile */}
+            {onClose && (
+                <button
+                    className={styles.closeButton}
+                    onClick={onClose}
+                    aria-label="Chiudi menu"
+                >
+                    <Icon iconName="Cancel" />
+                </button>
+            )}
+
             <ul className={styles.tabList}>
                 {projectConfig.lists.map((list) => (
                     <li
@@ -19,7 +31,7 @@ export const Sidebar: React.FC<ISidebarProps> = ({ isVisible, selectedTab, onTab
                         }
                         onClick={() => onTabChange(list.id)}
                     >
-                        <Icon iconName={list.icon || 'Page'} className={styles.icon}/>
+                        <Icon iconName={list.icon || 'Page'} className={styles.icon} />
                         {list.name}
                     </li>
                 ))}

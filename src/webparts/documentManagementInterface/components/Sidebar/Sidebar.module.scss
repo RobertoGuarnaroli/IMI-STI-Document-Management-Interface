@@ -1,10 +1,57 @@
+// Breakpoints
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+
+// ============================================
+// SIDEBAR RESPONSIVE
+// ============================================
 .sidebar {
   background: linear-gradient(145deg, #f8f5fa 0%, #ffffff 100%);
-  padding: 20px 16px;
-  border-radius: 16px;
+  padding: 16px 12px;
+  border-radius: 12px;
   box-shadow: 0 2px 8px rgba(68,31,83,0.08);
   border: 1px solid #e1d8f1;
-  height: 100%;
+  height: auto;
+  max-height: 80vh;
+  overflow-y: auto;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Mobile: sidebar come drawer
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    max-height: 100vh;
+    width: 280px;
+    z-index: 1000;
+    transform: translateX(-100%);
+    border-radius: 0 16px 16px 0;
+    padding: 20px 16px;
+    
+    &.visible {
+      transform: translateX(0);
+      box-shadow: 4px 0 20px rgba(68, 31, 83, 0.15);
+    }
+  }
+
+  // Tablet
+  @media (min-width: $breakpoint-md) {
+    padding: 18px 14px;
+    border-radius: 14px;
+    height: 100%;
+    max-height: none;
+    width: 220px;
+    flex-shrink: 0;
+  }
+
+  // Desktop
+  @media (min-width: $breakpoint-lg) {
+    padding: 20px 16px;
+    border-radius: 16px;
+    width: 260px;
+  }
 }
 
 .visible {
@@ -13,7 +60,13 @@
 }
 
 .hidden {
-  display: none;
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    transform: translateX(-100%);
+  }
+  
+  @media (min-width: $breakpoint-md) {
+    display: block;
+  }
 }
 
 @keyframes slideIn {
@@ -27,15 +80,42 @@
   }
 }
 
+// ============================================
+// MOBILE: slide in animation
+// ============================================
+@media (max-width: #{$breakpoint-md - 1px}) {
+  .sidebar {
+    animation: slideInFromLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  @keyframes slideInFromLeft {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+}
+
+// ============================================
+// TAB LIST
+// ============================================
 .tabList {
   list-style-type: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
+// ============================================
+// TAB ITEM RESPONSIVE
+// ============================================
 .tabItem {
-  padding: 10px 18px;
-  min-height: 40px;
+  padding: 10px 14px;
+  min-height: 44px; // Touch-friendly su mobile
   margin-bottom: 4px;
   cursor: pointer;
   display: flex;
@@ -48,6 +128,20 @@
   position: relative;
   overflow: hidden;
   background: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  // Tablet e desktop
+  @media (min-width: $breakpoint-md) {
+    padding: 10px 16px;
+    min-height: 40px;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    padding: 10px 18px;
+    font-size: 14.5px;
+  }
 
   &::before {
     content: '';
@@ -60,34 +154,57 @@
     transition: left 0.5s ease;
   }
 
-  &:hover {
-    background: linear-gradient(135deg, #f3edf6 0%, #f8f5fa 100%);
-    color: #441f53;
-    transform: translateX(6px) scale(1.02);
-    box-shadow: 0 4px 12px rgba(68, 31, 83, 0.12);
-    
-    &::before {
-      left: 100%;
-    }
-    
-    .icon {
-      color: #441f53;
-      transform: scale(1.1);
+  // Touch feedback su mobile
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    &:active {
+      background: rgba(68, 31, 83, 0.05);
+      transform: scale(0.98);
     }
   }
 
-  &:active {
-    transform: translateX(6px) scale(0.98);
+  // Hover su desktop
+  @media (min-width: $breakpoint-md) {
+    &:hover {
+      background: linear-gradient(135deg, #f3edf6 0%, #f8f5fa 100%);
+      color: #441f53;
+      transform: translateX(6px) scale(1.02);
+      box-shadow: 0 4px 12px rgba(68, 31, 83, 0.12);
+      
+      &::before {
+        left: 100%;
+      }
+      
+      .icon {
+        color: #441f53;
+        transform: scale(1.1);
+      }
+    }
+
+    &:active {
+      transform: translateX(6px) scale(0.98);
+    }
   }
 }
 
+// ============================================
+// ICON
+// ============================================
 .icon {
-  margin-right: 14px;
+  margin-right: 12px;
   font-size: 18px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   color: #7a6984;
+  flex-shrink: 0;
+
+  @media (min-width: $breakpoint-lg) {
+    margin-right: 14px;
+    font-size: 19px;
+  }
 }
 
+// ============================================
+// SELECTED STATE
+// ============================================
 .selected {
   background: linear-gradient(135deg, #441f53 0%, #5a2a6b 100%);
   color: #ffffff;
@@ -125,17 +242,69 @@
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
   }
 
-  &:hover {
-    background: linear-gradient(135deg, #5a2a6b 0%, #6e3782 100%);
-    color: #ffffff;
-    transform: translateX(4px) scale(1.02);
-    box-shadow: 0 10px 25px rgba(68, 31, 83, 0.45),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  // Hover su desktop
+  @media (min-width: $breakpoint-md) {
+    &:hover {
+      background: linear-gradient(135deg, #5a2a6b 0%, #6e3782 100%);
+      color: #ffffff;
+      transform: translateX(4px) scale(1.02);
+      box-shadow: 0 10px 25px rgba(68, 31, 83, 0.45),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  // Touch feedback su mobile
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    &:active {
+      background: linear-gradient(135deg, #5a2a6b 0%, #6e3782 100%);
+      transform: scale(0.98);
+    }
   }
 }
 
+// ============================================
+// MENU CONTAINER
+// ============================================
 .menuContainer {
-  border-radius: 18px;
+  border-radius: 14px;
   background: linear-gradient(135deg, #f3e6fa 0%, #fff 60%, #e2d6f3 100%);
   box-shadow: 0 4px 18px rgba(68, 31, 83, 0.10);
+
+  @media (min-width: $breakpoint-lg) {
+    border-radius: 18px;
+  }
+}
+
+// ============================================
+// CLOSE BUTTON (Mobile Only)
+// ============================================
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(68, 31, 83, 0.1);
+  border: none;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(68, 31, 83, 0.15);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  i {
+    font-size: 20px;
+    color: #441f53;
+  }
+
+  @media (min-width: $breakpoint-md) {
+    display: none;
+  }
 }

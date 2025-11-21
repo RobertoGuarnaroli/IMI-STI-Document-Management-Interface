@@ -1,18 +1,315 @@
+// Breakpoints
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+
+// ============================================
+// CONTAINER RESPONSIVE
+// ============================================
 .container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   position: relative;
+
+  @media (min-width: $breakpoint-md) {
+    gap: 14px;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    gap: 16px;
+  }
 }
 
+// ============================================
+// LIST CONTAINER RESPONSIVE
+// ============================================
 .listContainer {
   box-shadow: 0 2px 8px rgba(68,31,83,0.08);
   border: 1px solid #e1d8f1;
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 12px;
   min-height: 48px;
   width: 100%;
   box-sizing: border-box;
   overflow-x: auto;
   overflow-y: auto;
+  background: #ffffff;
+
+  // Tablet
+  @media (min-width: $breakpoint-md) {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  // Desktop
+  @media (min-width: $breakpoint-lg) {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  // Mobile: scroll orizzontale per tabelle larghe
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    -webkit-overflow-scrolling: touch;
+    
+    // Assicura che le tabelle siano scrollabili
+    :global {
+      .ms-DetailsList {
+        min-width: 800px; // Larghezza minima per evitare compressione eccessiva
+      }
+    }
+  }
+}
+
+// ============================================
+// DETAILSLIST RESPONSIVE OVERRIDES
+// ============================================
+:global {
+  // Mobile: dimensioni ridotte per celle
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    .ms-DetailsHeader {
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+
+    .ms-DetailsHeader-cellTitle {
+      font-size: 13px;
+      padding: 4px 8px;
+    }
+
+    .ms-DetailsRow {
+      min-height: 40px;
+    }
+
+    .ms-DetailsRow-cell {
+      font-size: 13px;
+      padding: 6px 8px;
+    }
+  }
+
+  // Tablet: dimensioni intermedie
+  @media (min-width: $breakpoint-md) and (max-width: #{$breakpoint-lg - 1px}) {
+    .ms-DetailsHeader-cellTitle {
+      font-size: 14px;
+      padding: 6px 10px;
+    }
+
+    .ms-DetailsRow-cell {
+      font-size: 14px;
+      padding: 8px 10px;
+    }
+  }
+
+  // Desktop: dimensioni standard
+  @media (min-width: $breakpoint-lg) {
+    .ms-DetailsHeader-cellTitle {
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+
+    .ms-DetailsRow-cell {
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+  }
+
+  // Migliora la leggibilità su mobile
+  @media (max-width: #{$breakpoint-sm - 1px}) {
+    .ms-DetailsList {
+      .ms-DetailsRow-cell {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+      }
+    }
+  }
+}
+
+// ============================================
+// GRID LAYOUT PER CARDS (Alternative View)
+// ============================================
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+
+  @media (min-width: $breakpoint-sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  @media (min-width: $breakpoint-xl) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+// ============================================
+// CARD COMPONENT (per vista alternativa)
+// ============================================
+.card {
+  background: linear-gradient(135deg, #ffffff 0%, #f9f7fb 100%);
+  border: 1px solid #e1d8f1;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(68, 31, 83, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(68, 31, 83, 0.12);
+    transform: translateY(-2px);
+    border-color: #d0c3e0;
+  }
+
+  @media (min-width: $breakpoint-md) {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    padding: 20px;
+    border-radius: 16px;
+  }
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #441f53;
+  margin-bottom: 8px;
+
+  @media (min-width: $breakpoint-lg) {
+    font-size: 17px;
+    margin-bottom: 10px;
+  }
+}
+
+.cardContent {
+  font-size: 14px;
+  color: #5a4d62;
+  line-height: 1.5;
+
+  @media (min-width: $breakpoint-lg) {
+    font-size: 14.5px;
+  }
+}
+
+// ============================================
+// EMPTY STATE RESPONSIVE
+// ============================================
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  color: #7a6984;
+
+  @media (min-width: $breakpoint-md) {
+    padding: 48px 24px;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    padding: 64px 32px;
+  }
+
+  i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+
+    @media (min-width: $breakpoint-lg) {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+  }
+
+  p {
+    font-size: 15px;
+    margin: 0;
+
+    @media (min-width: $breakpoint-lg) {
+      font-size: 16px;
+    }
+  }
+}
+
+// ============================================
+// FILTER BAR RESPONSIVE
+// ============================================
+.filterBar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f5fa;
+  border-radius: 10px;
+  margin-bottom: 12px;
+
+  @media (min-width: $breakpoint-sm) {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  @media (min-width: $breakpoint-md) {
+    padding: 14px 16px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    padding: 16px 20px;
+    border-radius: 14px;
+    margin-bottom: 16px;
+  }
+}
+
+.filterItem {
+  flex: 1;
+  min-width: 200px;
+
+  @media (max-width: #{$breakpoint-sm - 1px}) {
+    min-width: 100%;
+  }
+}
+
+// ============================================
+// ACTION BUTTONS RESPONSIVE
+// ============================================
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  @media (min-width: $breakpoint-sm) {
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  @media (min-width: $breakpoint-md) {
+    gap: 12px;
+  }
+
+  button {
+    width: 100%;
+
+    @media (min-width: $breakpoint-sm) {
+      width: auto;
+    }
+  }
 }

@@ -1,13 +1,235 @@
+// Breakpoints
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
 
+// ============================================
+// BUTTONS RIBBON RESPONSIVE
+// ============================================
 .buttonsRibbon {
   background: #f4f2fa;
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: 0 2px 8px rgba(68,31,83,0.08);
   border: 1px solid #e1d8f1;
-  padding: 12px 20px 12px 12px;
+  padding: 10px 12px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
   min-height: 48px;
   width: 100%;
   box-sizing: border-box;
+
+  // Mobile: pulsanti in colonna o wrappati
+  @media (max-width: #{$breakpoint-sm - 1px}) {
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  // Tablet piccolo: wrapping
+  @media (min-width: $breakpoint-sm) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 10px 14px;
+    gap: 10px;
+    
+    button {
+      width: auto;
+      flex: 0 1 auto;
+    }
+  }
+
+  // Tablet: riga singola
+  @media (min-width: $breakpoint-md) {
+    flex-wrap: nowrap;
+    padding: 12px 16px;
+    gap: 12px;
+    border-radius: 14px;
+  }
+
+  // Desktop
+  @media (min-width: $breakpoint-lg) {
+    padding: 12px 20px;
+    border-radius: 16px;
+  }
+
+  // Stili pulsanti responsivi
+  :global {
+    .ms-Button {
+      min-width: auto;
+      padding: 8px 16px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+
+      @media (max-width: #{$breakpoint-sm - 1px}) {
+        padding: 10px 20px;
+        font-size: 15px;
+        min-height: 44px; // Touch-friendly
+      }
+
+      @media (min-width: $breakpoint-md) {
+        padding: 8px 18px;
+      }
+
+      @media (min-width: $breakpoint-lg) {
+        padding: 10px 20px;
+      }
+
+      // Icon spacing responsive
+      .ms-Button-icon {
+        margin-right: 6px;
+        font-size: 14px;
+
+        @media (min-width: $breakpoint-md) {
+          margin-right: 8px;
+          font-size: 15px;
+        }
+      }
+
+      // Mobile: touch feedback
+      @media (max-width: #{$breakpoint-md - 1px}) {
+        &:active {
+          transform: scale(0.98);
+        }
+      }
+
+      // Desktop: hover effects
+      @media (min-width: $breakpoint-md) {
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(68, 31, 83, 0.15);
+        }
+      }
+    }
+  }
+}
+
+// ============================================
+// BUTTON GROUP (per raggruppare pulsanti)
+// ============================================
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+
+  @media (min-width: $breakpoint-sm) {
+    flex-direction: row;
+    width: auto;
+  }
+
+  @media (min-width: $breakpoint-md) {
+    gap: 10px;
+  }
+}
+
+// ============================================
+// BUTTON SEPARATOR (spacer responsive)
+// ============================================
+.buttonSeparator {
+  display: none;
+
+  @media (min-width: $breakpoint-md) {
+    display: block;
+    width: 1px;
+    height: 24px;
+    background: #e1d8f1;
+    margin: 0 4px;
+  }
+}
+
+// ============================================
+// ICON ONLY BUTTONS (per mobile compact view)
+// ============================================
+.iconOnlyButton {
+  @media (max-width: #{$breakpoint-sm - 1px}) {
+    :global {
+      .ms-Button-label {
+        display: none;
+      }
+
+      .ms-Button-icon {
+        margin: 0;
+        font-size: 18px;
+      }
+    }
+  }
+}
+
+// ============================================
+// OVERFLOW MENU (per troppi pulsanti su mobile)
+// ============================================
+.overflowMenu {
+  position: relative;
+
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    width: 100%;
+  }
+}
+
+.overflowButton {
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    width: 100%;
+  }
+}
+
+// ============================================
+// DROPDOWN ACTIONS MENU
+// ============================================
+.actionsMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #ffffff;
+  border: 1px solid #e1d8f1;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(68, 31, 83, 0.12);
+  z-index: 100;
+  min-width: 200px;
+
+  @media (max-width: #{$breakpoint-sm - 1px}) {
+    left: 0;
+    right: 0;
+    min-width: 100%;
+  }
+}
+
+.menuItem {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #5a4d62;
+  font-size: 14px;
+
+  &:hover {
+    background: #f8f5fa;
+  }
+
+  &:active {
+    background: #f3edf6;
+  }
+
+  &:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+
+  &:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+
+  i {
+    font-size: 16px;
+    color: #7a6984;
+  }
+
+  @media (min-width: $breakpoint-md) {
+    padding: 8px 14px;
+  }
 }

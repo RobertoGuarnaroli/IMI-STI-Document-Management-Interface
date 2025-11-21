@@ -112,6 +112,15 @@ export class ProjectsService {
             return [];
         }
     }
+
+    public async deleteProject(itemId: number): Promise<void> {
+        try {
+            await this.sp.web.lists.getByTitle("Projects").items.getById(itemId).delete();
+        } catch (error) {
+            console.error("Errore nella cancellazione del progetto:", error);
+            throw error;
+        }
+    }
 }
 
 
