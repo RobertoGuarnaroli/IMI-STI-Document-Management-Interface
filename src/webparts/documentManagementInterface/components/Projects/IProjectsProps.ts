@@ -8,8 +8,11 @@ export interface IProjectItem{
 	ProjectCode?: string;
     Title?: string;
     Customer?: string;
-    ProjectManagerId?: number;
-    ProjectManagerTitle?: string;
+    ProjectManager:{
+        Id: number;
+        Title: string;
+        Picture?: string;
+    };
     Status?: string;
     StartDate?: string;
     EndDate?: string;

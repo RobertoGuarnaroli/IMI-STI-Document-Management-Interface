@@ -52,13 +52,24 @@ export const PeoplePicker: React.FC<IGenericPeoplePickerProps> = ({
    * SYNC utenti selezionati da ID
    * -------------------------*/
   React.useEffect(() => {
-    if (selectedUserIds.length > 0 && usersList.length > 0) {
-      const selected = usersList.filter(user =>
-        selectedUserIds.includes(Number(user.id))
-      );
-      setSelectedUsers(selected);
-    }
+    console.log("Sync → selectedUserIds:", selectedUserIds);
+    console.log("Sync → usersList:", usersList);
+
+    if (usersList.length === 0) return;
+
+    const normalizedSelectedIds = selectedUserIds.map(String);
+
+    const selected = usersList.filter(user =>
+      normalizedSelectedIds.includes(String(user.id))
+    );
+
+    console.log("→ selectedUsers result:", selected);
+
+    setSelectedUsers(selected);
   }, [selectedUserIds, usersList]);
+
+
+
 
   /** -------------------------
    * FILTRO SUGGERIMENTI

@@ -77,12 +77,16 @@ export const Documents: React.FC<IDocumentsProps> = ({ context }) => {
                 <LoadingSpinner />
             ) : (
                 <div className={styles.listContainer}>
-                    <DetailsList
-                        items={items}
-                        columns={columns}
-                        layoutMode={DetailsListLayoutMode.justified}
-                        constrainMode={ConstrainMode.unconstrained}
-                    />
+                    {items.length === 0 ? (
+                        <div className={styles.emptyListMessage}>Nessun record disponibile</div>
+                    ) : (
+                        <DetailsList
+                            items={items}
+                            columns={columns}
+                            layoutMode={DetailsListLayoutMode.justified}
+                            constrainMode={ConstrainMode.unconstrained}
+                        />
+                    )}
                 </div>
             )}
         </div>

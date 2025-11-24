@@ -71,13 +71,19 @@ export const Transmittals: React.FC<ITransmittalsProps> = ({ context }) => {
             {loading ? (
                 <LoadingSpinner />
             ) : (
-                <DetailsList
-                    items={items}
-                    columns={columns}
-                    setKey="set"
-                    layoutMode={DetailsListLayoutMode.fixedColumns}
-                    constrainMode={ConstrainMode.unconstrained}
-                />
+                <div className={styles.listContainer}>
+                    {items.length === 0 ? (
+                        <div className={styles.emptyListMessage}>Nessun record disponibile</div>
+                    ) : (
+                        <DetailsList
+                            items={items}
+                            columns={columns}
+                            setKey="set"
+                            layoutMode={DetailsListLayoutMode.fixedColumns}
+                            constrainMode={ConstrainMode.unconstrained}
+                        />
+                    )}
+                </div>
             )}
         </div>
     );

@@ -19,8 +19,8 @@ export const ButtonsRibbon: React.FC<IButtonsRibbonProps> = ({ buttons }) => (
                     onClick={btn.onClick}
                     disabled={btn.disabled}
                     style={{
-                        backgroundColor: btn.color || undefined,
-                        ...btn.style
+                        backgroundColor: btn.color,
+                        borderColor: btn.border
                     }}
                     {...btn.buttonProps}
                 />

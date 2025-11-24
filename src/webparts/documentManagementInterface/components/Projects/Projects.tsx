@@ -29,6 +29,19 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
         EndDate: '',
         Notes: ''
     });
+    const [editProject, setEditProject] = React.useState({
+        Id: undefined as number | undefined,
+        ProjectCode: '',
+        Title: '',
+        Customer: '',
+        ProjectManagerId: undefined as number | undefined,
+        ProjectManagerTitle: '',
+        Status: '',
+        StartDate: '',
+        EndDate: '',
+        Notes: ''
+    });
+    const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
 
     // Stato per la modifica
     const [editProjectId, setEditProjectId] = React.useState<number | null>(null);
@@ -116,8 +129,11 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                 ProjectCode: item.ProjectCode || '',
                 Title: item.Title || '',
                 Customer: item.Customer || '',
-                ProjectManagerTitle: item.ProjectManager?.Title || '',
-                ProjectManagerId: item.ProjectManager?.Id || undefined,
+                ProjectManager: {
+                    Title: item.ProjectManager?.Title || '',
+                    Id: item.ProjectManager?.Id || undefined,
+                    Picture: item.ProjectManager?.Picture || undefined
+                },
                 Status: item.Status || '',
                 StartDate: item.StartDate || '',
                 EndDate: item.EndDate || '',
@@ -191,7 +207,11 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                 ProjectCode: item.ProjectCode || '',
                 Title: item.Title || '',
                 Customer: item.Customer || '',
-                ProjectManagerTitle: item.ProjectManager?.Title || '',
+                ProjectManager: {
+                    Title: item.ProjectManager?.Title || '',
+                    Id: item.ProjectManager?.Id || undefined,
+                    Picture: item.ProjectManager?.Picture || undefined
+                },
                 Status: item.Status || '',
                 StartDate: item.StartDate || '',
                 EndDate: item.EndDate || '',
@@ -224,7 +244,11 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                     ProjectCode: item.ProjectCode || '',
                     Title: item.Title || '',
                     Customer: item.Customer || '',
-                    ProjectManagerTitle: item.ProjectManager?.Title || '',
+                    ProjectManager: {
+                        Title: item.ProjectManager?.Title || '',
+                        Id: item.ProjectManager?.Id || undefined,
+                        Picture: item.ProjectManager?.Picture || undefined
+                    },
                     Status: item.Status || '',
                     StartDate: item.StartDate || '',
                     EndDate: item.EndDate || '',
@@ -282,11 +306,11 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
             maxWidth: 250,
             isResizable: true,
             onRender: (item) => (
-                item.ProjectManager ? (
+                item.ProjectManager.Title ? (
                     <Persona
-                        text={item.ProjectManagerTitle}
+                        text={item.ProjectManager.Title}
                         size={PersonaSize.size32}
-                        imageUrl={item.ProjectManagerPhotoUrl}
+                        imageUrl={item.ProjectManager.Picture}
                     />
                 ) : ''
             )
@@ -311,7 +335,6 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                             text: 'New Project',
                             iconName: 'Add',
                             onClick: () => {
-                                setEditProjectId(null);
                                 setNewProject({
                                     ProjectCode: '',
                                     Title: '',
@@ -326,7 +349,8 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                                 setIsModalOpen(true);
                             },
                             disabled: false,
-                            color: '#5a2a6b'
+                            color: '#5a2a6b',
+                            border: '#5a2a6b'
                         },
                         selectedItems.length === 1 ? {
                             key: 'editProject',
@@ -334,22 +358,23 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                             iconName: 'Edit',
                             onClick: () => {
                                 const item = selectedItems[0];
-                                setEditProjectId(item.Id || null);
-                                setNewProject({
+                                setEditProject({
+                                    Id: item.Id,
                                     ProjectCode: item.ProjectCode || '',
                                     Title: item.Title || '',
                                     Customer: item.Customer || '',
-                                    ProjectManagerId: item.ProjectManagerId,
-                                    ProjectManagerTitle: item.ProjectManagerTitle || '',
+                                    ProjectManagerId: item.ProjectManager.Id ? Number(item.ProjectManager.Id) : undefined,
+                                    ProjectManagerTitle: item.ProjectManager.Title || '',
                                     Status: item.Status || '',
                                     StartDate: item.StartDate || '',
                                     EndDate: item.EndDate || '',
                                     Notes: item.Notes || ''
                                 });
-                                setIsModalOpen(true);
+                                setIsEditModalOpen(true);
                             },
                             disabled: false,
                             color: '#5a2a6b',
+                            border: '#5a2a6b'
                         } : null,
                         selectedItems.length > 0 ? {
                             key: 'deleteProject',
@@ -358,6 +383,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                             onClick: () => setShowDeleteConfirm(true),
                             disabled: false,
                             color: '#a4262c',
+                            border: '#a4262c'
                         } : null
                     ].filter((b): b is NonNullable<typeof b> => b !== null)
                 }
@@ -366,24 +392,29 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                 <LoadingSpinner />
             ) : (
                 <div className={styles.listContainer}>
-                    <DetailsList
-                        items={items}
-                        columns={columns}
-                        setKey="set"
-                        selectionMode={2}
-                        selection={selectionRef.current!}
-                        selectionPreservedOnEmptyClick={true}
-                        layoutMode={DetailsListLayoutMode.justified}
-                        constrainMode={ConstrainMode.horizontalConstrained}
-                    />
+                    {items.length === 0 ? (
+                        <div className={styles.emptyListMessage}>Nessun record disponibile</div>
+                    ) : (
+                        <DetailsList
+                            items={items}
+                            columns={columns}
+                            setKey="set"
+                            selectionMode={2}
+                            selection={selectionRef.current!}
+                            selectionPreservedOnEmptyClick={true}
+                            layoutMode={DetailsListLayoutMode.justified}
+                            constrainMode={ConstrainMode.horizontalConstrained}
+                        />
+
+                    )}
                 </div>
             )}
             {isModalOpen && (
                 <ModalContainer
                     isOpen={isModalOpen}
-                    title={editProjectId ? "Modifica Project" : "Crea nuovo Project"}
+                    title="Crea nuovo Project"
                     onSave={handleSaveProject}
-                    onCancel={() => { setIsModalOpen(false); setEditProjectId(null); }}
+                    onCancel={() => setIsModalOpen(false)}
                     saving={saving}
                 >
                     <TextField label="Project Code" value={newProject.ProjectCode} onChange={(_, v) => setNewProject(p => ({ ...p, ProjectCode: v || '' }))} required />
@@ -398,15 +429,17 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                         placeholder="Seleziona uno stato"
                     />
                     <PeoplePicker
+                        key="new"
                         context={context}
                         titleText="Project Manager"
                         personSelectionLimit={1}
                         showtooltip={true}
                         required={true}
-                        onChange={items => {
+                        selectedUserIds={typeof newProject.ProjectManagerId === 'number' ? [newProject.ProjectManagerId] : []}
+                        onChange={userIds => {
                             setNewProject(p => ({
                                 ...p,
-                                ProjectManagerId: items[0] ? Number(items[0]) : undefined
+                                ProjectManagerId: userIds[0] ? Number(userIds[0]) : undefined
                             }));
                         }}
                         principalTypes={[1]}
@@ -414,11 +447,6 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                         ensureUser={true}
                         showHiddenInUI={false}
                         suggestionsLimit={15}
-                        defaultSelectedUsers={editProjectId && newProject.ProjectManagerId && newProject.ProjectManagerTitle ? [{
-                            text: newProject.ProjectManagerTitle,
-                            secondaryText: '',
-                            id: String(newProject.ProjectManagerId)
-                        }] : []}
                         disabled={false}
                         label="Project Manager"
                         placeholder="Seleziona il Project Manager"
@@ -445,6 +473,190 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                         isRequired={true}
                     />
                     <TextField label="Notes" multiline rows={3} value={newProject.Notes} onChange={(_, v) => setNewProject(p => ({ ...p, Notes: v || '' }))} />
+                </ModalContainer>
+            )}
+
+            {isEditModalOpen && (
+                <ModalContainer
+                    isOpen={isEditModalOpen}
+                    title="Modifica Project"
+                    onSave={async () => {
+                        setDateError(null);
+                        setFormError(null);
+                        setShowError(false);
+                        if (!editProject.ProjectCode || !editProject.Title || !editProject.Customer || !editProject.Status || !editProject.ProjectManagerId) {
+                            setFormError('Compila tutti i campi obbligatori prima di salvare.');
+                            setShowError(true);
+                            return;
+                        }
+                        if (editProject.StartDate && editProject.EndDate) {
+                            const start = new Date(editProject.StartDate);
+                            const end = new Date(editProject.EndDate);
+                            if (end < start) {
+                                setDateError('La data di fine non può essere precedente alla data di inizio.');
+                                setShowError(true);
+                                return;
+                            }
+                        }
+                        setSaving(true);
+                        try {
+                            const service = new ProjectsService(context);
+                            await service.updateProject(editProject.Id!, {
+                                ProjectCode: editProject.ProjectCode,
+                                Title: editProject.Title,
+                                Customer: editProject.Customer,
+                                ProjectManagerId: editProject.ProjectManagerId,
+                                Status: editProject.Status,
+                                StartDate: editProject.StartDate,
+                                EndDate: editProject.EndDate,
+                                Notes: editProject.Notes
+                            });
+                            setIsEditModalOpen(false);
+                            setEditProject({
+                                Id: undefined,
+                                ProjectCode: '',
+                                Title: '',
+                                Customer: '',
+                                ProjectManagerId: undefined,
+                                ProjectManagerTitle: '',
+                                Status: '',
+                                StartDate: '',
+                                EndDate: '',
+                                Notes: ''
+                            });
+                            setLoading(true);
+                            const data = await service.getProjects();
+                            const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
+                            const mapped: IProjectItem[] = data.map((item) => ({
+                                key: item.Id,
+                                Id: item.Id,
+                                ProjectCode: item.ProjectCode || '',
+                                Title: item.Title || '',
+                                Customer: item.Customer || '',
+                                ProjectManager: {
+                                    Id: item.ProjectManager?.Id || undefined,
+                                    Title: item.ProjectManager?.Title || '',
+                                    Picture: item.ProjectManager?.Picture || undefined
+                                },
+                                Status: item.Status || '',
+                                StartDate: item.StartDate || '',
+                                EndDate: item.EndDate || '',
+                                Notes: item.Notes ? stripHtml(item.Notes) : '',
+                                Modified: item.Modified || '',
+                                Created: item.Created || '',
+                                CreatedBy: item.Author?.Title || '',
+                                ModifiedBy: item.Editor?.Title || '',
+                                context: context
+                            }));
+                            setItems(mapped);
+                        } catch (error: unknown) {
+                            let errorMsg = 'Errore durante la modifica del progetto.';
+                            if (typeof error === 'object' && error !== null) {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                const err = error as any;
+                                if (err.data?.odata?.error?.message?.value) {
+                                    errorMsg = err.data.odata.error.message.value;
+                                } else if (err.message && typeof err.message === 'string') {
+                                    try {
+                                        const parsed = JSON.parse(err.message);
+                                        if (parsed?.odata?.error?.message?.value) {
+                                            errorMsg = parsed.odata.error.message.value;
+                                        } else {
+                                            errorMsg = err.message;
+                                        }
+                                    } catch {
+                                        errorMsg = err.message;
+                                    }
+                                } else if (err.responseText && typeof err.responseText === 'string') {
+                                    errorMsg = err.responseText;
+                                }
+                            }
+                            if (errorMsg.includes('::>')) {
+                                const match = errorMsg.match(/\{"odata.error":\{"code":"[^"]+","message":\{"lang":"[^"]+","value":"([^"]+)"/);
+                                if (match && match[1]) {
+                                    errorMsg = match[1];
+                                }
+                            }
+                            setFormError(errorMsg);
+                            setShowError(true);
+                        } finally {
+                            setSaving(false);
+                            setLoading(false);
+                        }
+                    }}
+                    onCancel={() => {
+                        setIsEditModalOpen(false);
+                        setEditProject({
+                            Id: undefined,
+                            ProjectCode: '',
+                            Title: '',
+                            Customer: '',
+                            ProjectManagerId: undefined,
+                            ProjectManagerTitle: '',
+                            Status: '',
+                            StartDate: '',
+                            EndDate: '',
+                            Notes: ''
+                        });
+                    }}
+                    saving={saving}
+                >
+                    <TextField label="Project Code" value={editProject.ProjectCode} onChange={(_, v) => setEditProject(p => ({ ...p, ProjectCode: v || '' }))} required />
+                    <TextField label="Title" value={editProject.Title} onChange={(_, v) => setEditProject(p => ({ ...p, Title: v || '' }))} required />
+                    <TextField label="Customer" value={editProject.Customer} onChange={(_, v) => setEditProject(p => ({ ...p, Customer: v || '' }))} required />
+                    <Dropdown
+                        label="Status"
+                        options={statusOptions}
+                        selectedKey={editProject.Status}
+                        onChange={(_, option) => setEditProject(p => ({ ...p, Status: option?.key as string }))}
+                        required
+                        placeholder="Seleziona uno stato"
+                    />
+                    <PeoplePicker
+                        key={editProject.Id ? `edit-${editProject.Id}` : 'edit'}
+                        context={context}
+                        titleText="Project Manager"
+                        personSelectionLimit={1}
+                        showtooltip={true}
+                        required={true}
+                        selectedUserIds={typeof editProject.ProjectManagerId === 'number' ? [editProject.ProjectManagerId] : []}
+                        onChange={userIds => {
+                            setEditProject(p => ({
+                                ...p,
+                                ProjectManagerId: userIds[0] ? Number(userIds[0]) : undefined
+                            }));
+                        }}
+                        principalTypes={[1]}
+                        resolveDelay={300}
+                        ensureUser={true}
+                        showHiddenInUI={false}
+                        suggestionsLimit={15}
+                        disabled={false}
+                        label="Project Manager"
+                        placeholder="Seleziona il Project Manager"
+                        itemLimit={1}
+                        loadUsers={async (context) => {
+                            const service = new UsersService(context);
+                            return await service.getUsers();
+                        }}
+                    />
+                    <DatePicker
+                        label="Start Date"
+                        value={editProject.StartDate ? new Date(editProject.StartDate) : undefined}
+                        onSelectDate={date => setEditProject(p => ({ ...p, StartDate: date ? date.toISOString().substring(0, 10) : '' }))}
+                        placeholder="DD-MM-YYYY"
+                        formatDate={d => d ? d.toLocaleDateString() : ''}
+                        isRequired={true}
+                    />
+                    <DatePicker
+                        label="End Date"
+                        value={editProject.EndDate ? new Date(editProject.EndDate) : undefined}
+                        onSelectDate={date => setEditProject(p => ({ ...p, EndDate: date ? date.toISOString().substring(0, 10) : '' }))}
+                        placeholder="DD-MM-YYYY"
+                        formatDate={d => d ? d.toLocaleDateString() : ''}
+                        isRequired={true}
+                    />
+                    <TextField label="Notes" multiline rows={3} value={editProject.Notes} onChange={(_, v) => setEditProject(p => ({ ...p, Notes: v || '' }))} />
                 </ModalContainer>
             )}
             {showError && (

@@ -19,12 +19,31 @@ $breakpoint-lg: 1024px;
   min-height: 48px;
   width: 100%;
   box-sizing: border-box;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: #e1d8f1 #f4f2fa;
 
   // Mobile: pulsanti in colonna o wrappati
   @media (max-width: #{$breakpoint-sm - 1px}) {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
     button {
-      width: 100%;
+      display: inline-flex;
+      width: auto;
+      min-width: 120px;
       justify-content: center;
+      margin-right: 8px;
+    }
+    &::-webkit-scrollbar {
+      height: 6px;
+      background: #f4f2fa;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #e1d8f1;
+      border-radius: 4px;
     }
   }
 
@@ -35,10 +54,13 @@ $breakpoint-lg: 1024px;
     align-items: center;
     padding: 10px 14px;
     gap: 10px;
-    
+    overflow-x: auto;
+    white-space: nowrap;
     button {
+      display: inline-flex;
       width: auto;
       flex: 0 1 auto;
+      margin-right: 8px;
     }
   }
 
@@ -48,12 +70,19 @@ $breakpoint-lg: 1024px;
     padding: 12px 16px;
     gap: 12px;
     border-radius: 14px;
+    overflow-x: auto;
+    white-space: nowrap;
+    button {
+      margin-right: 10px;
+    }
   }
 
   // Desktop
   @media (min-width: $breakpoint-lg) {
     padding: 12px 20px;
     border-radius: 16px;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 
   // Stili pulsanti responsivi

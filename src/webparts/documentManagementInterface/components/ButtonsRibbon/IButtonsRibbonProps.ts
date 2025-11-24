@@ -11,8 +11,8 @@ export interface IButtonsRibbonButton {
     iconName?: string;
     onClick: () => void;
     disabled?: boolean;
-    color?: string; // colore di sfondo opzionale
-    style?: React.CSSProperties;
+    color?: string;
+    border?: string;
     buttonProps?: Partial<IButtonProps>;
     visible?: boolean;
 }

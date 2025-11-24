@@ -6,6 +6,8 @@ import { Projects } from './Projects/Projects';
 import { Documents } from './Documents/Documents';
 import { Transmittals } from './Transmittals/Transmittals';
 import { DistributionLists } from './DistributionLists/DistributionLists';
+import { DocumentHistory } from './DocumentHistory/DocumentHistory';
+import { Alerts } from './Alerts/Alerts';
 import { Files } from './Files/Files';
 import { Icon } from '@fluentui/react/lib/Icon';
 
@@ -89,9 +91,9 @@ export default class DocumentManagementInterface extends React.Component<
       case 'distributionLists':
         return <DistributionLists context={this.props.context} />;
       case 'documentHistory':
-        return <div>Document History</div>;
+        return <DocumentHistory context={this.props.context} />;
       case 'alerts':
-        return <div>Alerts</div>;
+        return <Alerts context={this.props.context} />;
       case 'files':
         return <Files context={this.props.context} />;
       default:

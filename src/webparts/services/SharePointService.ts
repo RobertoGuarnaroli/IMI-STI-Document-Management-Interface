@@ -263,6 +263,75 @@ export class DistributionListsService {
     }
 }
 
+/*===================================================================================
+    DOCUMENT HISTORY SERVICE
+====================================================================================*/
+
+export class DocumentHistoryService {
+    private sp: SPFI;
+    constructor(context: WebPartContext) {
+        this.sp = spfi().using(SPFx(context));
+    }
+    public async getDocumentHistory(): Promise<any[]> {
+        try {
+            const items = await this.sp.web.lists.getByTitle("DocumentHistory")
+                .items
+                .select(
+                    "*",
+                    "DocumentId/Id",
+                    "DocumentId/DocumentCode",
+                    "DocumentId/Revision",
+                    "PerformedBy/Id",
+                    "PerformedBy/Title",
+                    "PerformedBy/EMail",
+                    "Author/Id",
+                    "Author/Title",
+                    "Editor/Id",
+                    "Editor/Title"
+                )
+                .expand("DocumentId", "PerformedBy", "Author", "Editor")();
+            console.log('Raw SharePoint items:', items);
+            return items;
+        }
+        catch (error) {
+            console.error("Errore nel recupero della cronologia documenti:", error);
+            throw error;
+        }
+    }
+}
+
+/*===================================================================================
+    ALERTS SERVICE
+====================================================================================*/
+
+export class AlertsService {
+    private sp: SPFI;
+    constructor(context: WebPartContext) {
+        this.sp = spfi().using(SPFx(context));
+    }
+    public async getAlerts(): Promise<any[]> {
+        try {
+            const items = await this.sp.web.lists.getByTitle("Alerts")
+                .items
+                .select(
+                    "*",
+                    "ProjectCode/Id",
+                    "DocumentId/Id",
+                    "AssignedTo/Id",
+                    "AssignedTo/Title",
+                )
+                .expand("ProjectCode", "DocumentId", "AssignedTo")();
+            console.log('Raw SharePoint items:', items);
+            return items;
+        }
+        catch (error) {
+            console.error("Errore nel recupero degli alert:", error);
+            throw error;
+        }
+    }
+}
+
+
 
 /*===================================================================================
     FILES SERVICE
