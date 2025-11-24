@@ -157,17 +157,24 @@ body {
 .mainContent {
   flex: 1;
   padding: 16px;
-  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   border: 1px solid #e1d8f1;
   border-radius: 12px;
   background: #ffffff;
+  display: flex;
+  flex-direction: column;
 
-  // Tablet
+  // Mobile: altezza automatica
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    min-height: 400px;
+  }
+
+  // Tablet e Desktop: si adatta automaticamente all'altezza della sidebar grazie a flex
   @media (min-width: $breakpoint-md) {
     padding: 20px;
     border-radius: 14px;
+    // L'altezza sarà automaticamente uguale alla sidebar grazie ad align-items: stretch nel parent
   }
 
   // Desktop

@@ -263,7 +263,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                         items={items}
                         columns={columns}
                         layoutMode={DetailsListLayoutMode.justified}
-                        constrainMode={ConstrainMode.horizontalConstrained}
+                        constrainMode={ConstrainMode.horizontalConstrained}                       
                     />
                 </div>
             )}
