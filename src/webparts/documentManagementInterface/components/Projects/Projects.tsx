@@ -12,6 +12,7 @@ import { DatePicker } from '@fluentui/react/lib/DatePicker';
 import { ModalContainer } from '../ModalContainer/ModalContainer';
 import { ErrorPopUp } from '../ErrorPopUp/ErrorPopUp';
 import { ButtonsRibbon } from '../ButtonsRibbon/ButtonRibbons';
+import { Selection } from '@fluentui/react/lib/Selection';
 
 export const Projects: React.FC<IProjectsProps> = ({ context }) => {
     const [items, setItems] = React.useState<IProjectItem[]>([]);
@@ -22,17 +23,40 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
         Title: '',
         Customer: '',
         ProjectManagerId: undefined as number | undefined,
+        ProjectManagerTitle: '',
         Status: '',
         StartDate: '',
         EndDate: '',
         Notes: ''
     });
 
+    // Stato per la modifica
+    const [editProjectId, setEditProjectId] = React.useState<number | null>(null);
     const [statusOptions, setStatusOptions] = React.useState<IDropdownOption[]>([]);
     const [saving, setSaving] = React.useState(false);
     const [dateError, setDateError] = React.useState<string | null>(null);
     const [showError, setShowError] = React.useState(false);
     const [formError, setFormError] = React.useState<string | null>(null);
+    const selectionRef = React.useRef<Selection | null>(null);
+    const [selectedItems, setSelectedItems] = React.useState<IProjectItem[]>([]);
+    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!selectionRef.current) {
+            selectionRef.current = new Selection({
+                onSelectionChanged: () => {
+                    const selected = selectionRef.current?.getSelection() as IProjectItem[];
+                    setSelectedItems(selected);
+                }
+            });
+        }
+    }, []);
+
+    React.useEffect(() => {
+        if (selectionRef.current) {
+            selectionRef.current.setItems(items, true);
+        }
+    }, [items]);
 
     const handleSaveProject = async () => {
         setDateError(null);
@@ -56,27 +80,44 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
         setSaving(true);
         try {
             const service = new ProjectsService(context);
-            await service.addProject({
-                ProjectCode: newProject.ProjectCode,
-                Title: newProject.Title,
-                Customer: newProject.Customer,
-                ProjectManagerId: newProject.ProjectManagerId,
-                Status: newProject.Status,
-                StartDate: newProject.StartDate,
-                EndDate: newProject.EndDate,
-                Notes: newProject.Notes
-            });
+            if (editProjectId) {
+                await service.updateProject(editProjectId, {
+                    ProjectCode: newProject.ProjectCode,
+                    Title: newProject.Title,
+                    Customer: newProject.Customer,
+                    ProjectManagerId: newProject.ProjectManagerId,
+                    Status: newProject.Status,
+                    StartDate: newProject.StartDate,
+                    EndDate: newProject.EndDate,
+                    Notes: newProject.Notes
+                });
+            } else {
+                await service.addProject({
+                    ProjectCode: newProject.ProjectCode,
+                    Title: newProject.Title,
+                    Customer: newProject.Customer,
+                    ProjectManagerId: newProject.ProjectManagerId,
+                    Status: newProject.Status,
+                    StartDate: newProject.StartDate,
+                    EndDate: newProject.EndDate,
+                    Notes: newProject.Notes
+                });
+            }
             setIsModalOpen(false);
-            setNewProject({ ProjectCode: '', Title: '', Customer: '', ProjectManagerId: undefined, Status: '', StartDate: '', EndDate: '', Notes: '' });
+            setEditProjectId(null);
+            setNewProject({ ProjectCode: '', Title: '', Customer: '', ProjectManagerId: undefined, ProjectManagerTitle: '', Status: '', StartDate: '', EndDate: '', Notes: '' });
             setLoading(true);
             // Ricarica la lista
             const data = await service.getProjects();
             const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
             const mapped: IProjectItem[] = data.map((item) => ({
+                key: item.Id,
+                Id: item.Id,
                 ProjectCode: item.ProjectCode || '',
                 Title: item.Title || '',
                 Customer: item.Customer || '',
-                ProjectManager: item.ProjectManager?.Title || '',
+                ProjectManagerTitle: item.ProjectManager?.Title || '',
+                ProjectManagerId: item.ProjectManager?.Id || undefined,
                 Status: item.Status || '',
                 StartDate: item.StartDate || '',
                 EndDate: item.EndDate || '',
@@ -88,27 +129,69 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                 context: context
             }));
             setItems(mapped);
-        } catch {
-            // TODO: gestione errore
+        } catch (error: unknown) {
+            // Mostra solo il messaggio principale di errore
+            let errorMsg = 'Errore durante la creazione del progetto.';
+            if (typeof error === 'object' && error !== null) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const err = error as any;
+                // Caso SharePoint REST (PnPjs): estrai solo il messaggio leggibile
+                if (err.data?.odata?.error?.message?.value) {
+                    // Esempio: "The list item could not be added or updated because duplicate values were found in the following field(s) in the list: [ProjectCode]."
+                    errorMsg = err.data.odata.error.message.value;
+                } else if (err.message && typeof err.message === 'string') {
+                    // Se il messaggio contiene JSON, estrai solo la parte leggibile
+                    try {
+                        const parsed = JSON.parse(err.message);
+                        if (parsed?.odata?.error?.message?.value) {
+                            errorMsg = parsed.odata.error.message.value;
+                        } else {
+                            errorMsg = err.message;
+                        }
+                    } catch {
+                        errorMsg = err.message;
+                    }
+                } else if (err.responseText && typeof err.responseText === 'string') {
+                    // Alcuni errori custom
+                    errorMsg = err.responseText;
+                }
+            }
+            // Mostra solo la parte "leggibile" (senza prefissi tecnici)
+            if (errorMsg.includes('::>')) {
+                // Es: "Error making HttpClient request in queryable [500] ::> {json}"
+                const match = errorMsg.match(/\{"odata.error":\{"code":"[^"]+","message":\{"lang":"[^"]+","value":"([^"]+)"/);
+                if (match && match[1]) {
+                    errorMsg = match[1];
+                }
+            }
+            setFormError(errorMsg);
+            setShowError(true);
         } finally {
             setSaving(false);
             setLoading(false);
         }
     };
 
-    const handleDeleteProject = async (id: number) => {
+
+    const handleDeleteSelected = async (): Promise<void> => {
         setSaving(true);
         try {
             const service = new ProjectsService(context);
-            await service.deleteProject(id);
+            for (const item of selectedItems) {
+                if (item.Id) {
+                    await service.deleteProject(item.Id);
+                }
+            }
             // Aggiorna la lista dopo l'eliminazione
             const data = await service.getProjects();
             const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
             const mapped: IProjectItem[] = data.map((item) => ({
+                key: item.Id,
+                Id: item.Id,
                 ProjectCode: item.ProjectCode || '',
                 Title: item.Title || '',
                 Customer: item.Customer || '',
-                ProjectManager: item.ProjectManager?.Title || '',
+                ProjectManagerTitle: item.ProjectManager?.Title || '',
                 Status: item.Status || '',
                 StartDate: item.StartDate || '',
                 EndDate: item.EndDate || '',
@@ -120,6 +203,8 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                 context: context
             }));
             setItems(mapped);
+            setSelectedItems([]);
+            setShowDeleteConfirm(false);
         } catch {
             // TODO: gestione errore
         } finally {
@@ -132,13 +217,14 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
             try {
                 const service = new ProjectsService(context);
                 const data = await service.getProjects();
-                const stripHtml = (html: string) => html.replace(/<[^>]+>/g, '').trim();
+                const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
                 const mapped: IProjectItem[] = data.map((item) => ({
+                    key: item.Id,
                     Id: item.Id,
                     ProjectCode: item.ProjectCode || '',
                     Title: item.Title || '',
                     Customer: item.Customer || '',
-                    ProjectManager: item.ProjectManager?.Title || '',
+                    ProjectManagerTitle: item.ProjectManager?.Title || '',
                     Status: item.Status || '',
                     StartDate: item.StartDate || '',
                     EndDate: item.EndDate || '',
@@ -161,7 +247,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
     }, []);
 
     React.useEffect(() => {
-        const fetchStatusOptions = async () => {
+        const fetchStatusOptions = async (): Promise<void> => {
             const service = new ProjectsService(context);
             const choices = await service.getStatusChoices();
             setStatusOptions(choices.map(choice => ({ key: choice, text: choice })));
@@ -171,13 +257,13 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
 
     // Imposta lo stato predefinito e unico per nuovo progetto
     React.useEffect(() => {
-        if (isModalOpen) {
+        if (isModalOpen && !editProjectId) {
             setNewProject(p => ({ ...p, Status: 'Active' }));
             setStatusOptions([{ key: 'Active', text: 'Active' }]);
         }
-    }, [isModalOpen]);
+    }, [isModalOpen, editProjectId]);
 
-    const formatDate = (dateStr?: string) => {
+    const formatDate = (dateStr?: string): string => {
         if (!dateStr) return '';
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return dateStr;
@@ -198,7 +284,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
             onRender: (item) => (
                 item.ProjectManager ? (
                     <Persona
-                        text={item.ProjectManager}
+                        text={item.ProjectManagerTitle}
                         size={PersonaSize.size32}
                         imageUrl={item.ProjectManagerPhotoUrl}
                     />
@@ -218,42 +304,63 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
     return (
         <div className={styles.container}>
             <ButtonsRibbon
-                buttons={[
-                    {
-                        key: 'addProject',
-                        text: 'New Project',
-                        iconName: 'Add',
-                        onClick: () => setIsModalOpen(true),
-                        disabled: false,
-                        color: '#5a2a6b'
-                    },
-                    {
-                        key: 'deleteProject',
-                        text: 'Delete Project',
-                        iconName: 'Delete',
-                        onClick: () => {
-                            const selectedRows = items.filter(item => item.isSelected);
-                            if (selectedRows.length === 0) {
-                                setFormError('Seleziona almeno un progetto da eliminare.');
-                                setShowError(true);
-                                return;
-                            }
-                            Promise.all(selectedRows.map(async (item) => {
-                                if (item.Id) {
-                                    await handleDeleteProject(item.Id);
-                                }
-                            })).then(() => {
-                                setShowError(false);
-                            }).catch(() => {
-                                setFormError('Errore durante l\'eliminazione dei progetti.');
-                                setShowError(true);
-                            });
+                buttons={
+                    [
+                        {
+                            key: 'addProject',
+                            text: 'New Project',
+                            iconName: 'Add',
+                            onClick: () => {
+                                setEditProjectId(null);
+                                setNewProject({
+                                    ProjectCode: '',
+                                    Title: '',
+                                    Customer: '',
+                                    ProjectManagerId: undefined,
+                                    ProjectManagerTitle: '',
+                                    Status: '',
+                                    StartDate: '',
+                                    EndDate: '',
+                                    Notes: ''
+                                });
+                                setIsModalOpen(true);
+                            },
+                            disabled: false,
+                            color: '#5a2a6b'
                         },
-                        disabled: false,
-                        color: '#a4262c',
-                        visible: items.some(item => item.isSelected)
-                    }
-                ]}
+                        selectedItems.length === 1 ? {
+                            key: 'editProject',
+                            text: 'Edit Project',
+                            iconName: 'Edit',
+                            onClick: () => {
+                                const item = selectedItems[0];
+                                setEditProjectId(item.Id || null);
+                                setNewProject({
+                                    ProjectCode: item.ProjectCode || '',
+                                    Title: item.Title || '',
+                                    Customer: item.Customer || '',
+                                    ProjectManagerId: item.ProjectManagerId,
+                                    ProjectManagerTitle: item.ProjectManagerTitle || '',
+                                    Status: item.Status || '',
+                                    StartDate: item.StartDate || '',
+                                    EndDate: item.EndDate || '',
+                                    Notes: item.Notes || ''
+                                });
+                                setIsModalOpen(true);
+                            },
+                            disabled: false,
+                            color: '#5a2a6b',
+                        } : null,
+                        selectedItems.length > 0 ? {
+                            key: 'deleteProject',
+                            text: 'Delete Project',
+                            iconName: 'Delete',
+                            onClick: () => setShowDeleteConfirm(true),
+                            disabled: false,
+                            color: '#a4262c',
+                        } : null
+                    ].filter((b): b is NonNullable<typeof b> => b !== null)
+                }
             />
             {loading ? (
                 <LoadingSpinner />
@@ -262,17 +369,21 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                     <DetailsList
                         items={items}
                         columns={columns}
+                        setKey="set"
+                        selectionMode={2}
+                        selection={selectionRef.current!}
+                        selectionPreservedOnEmptyClick={true}
                         layoutMode={DetailsListLayoutMode.justified}
-                        constrainMode={ConstrainMode.horizontalConstrained}                       
+                        constrainMode={ConstrainMode.horizontalConstrained}
                     />
                 </div>
             )}
             {isModalOpen && (
                 <ModalContainer
                     isOpen={isModalOpen}
-                    title="Crea nuovo Project"
+                    title={editProjectId ? "Modifica Project" : "Crea nuovo Project"}
                     onSave={handleSaveProject}
-                    onCancel={() => setIsModalOpen(false)}
+                    onCancel={() => { setIsModalOpen(false); setEditProjectId(null); }}
                     saving={saving}
                 >
                     <TextField label="Project Code" value={newProject.ProjectCode} onChange={(_, v) => setNewProject(p => ({ ...p, ProjectCode: v || '' }))} required />
@@ -287,7 +398,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                         placeholder="Seleziona uno stato"
                     />
                     <PeoplePicker
-                        context={context as any}
+                        context={context}
                         titleText="Project Manager"
                         personSelectionLimit={1}
                         showtooltip={true}
@@ -303,13 +414,17 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                         ensureUser={true}
                         showHiddenInUI={false}
                         suggestionsLimit={15}
-                        defaultSelectedUsers={[]}
+                        defaultSelectedUsers={editProjectId && newProject.ProjectManagerId && newProject.ProjectManagerTitle ? [{
+                            text: newProject.ProjectManagerTitle,
+                            secondaryText: '',
+                            id: String(newProject.ProjectManagerId)
+                        }] : []}
                         disabled={false}
                         label="Project Manager"
                         placeholder="Seleziona il Project Manager"
                         itemLimit={1}
                         loadUsers={async (context) => {
-                            const service = new UsersService(context as any);
+                            const service = new UsersService(context);
                             return await service.getUsers();
                         }}
                     />
@@ -338,6 +453,21 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                     onClose={() => setShowError(false)}
                     duration={4000}
                 />
+            )}
+            {showDeleteConfirm && (
+                <ModalContainer
+                    isOpen={showDeleteConfirm}
+                    title={selectedItems.length === 1 ? 'Conferma eliminazione progetto' : `Conferma eliminazione di ${selectedItems.length} progetti`}
+                    onSave={handleDeleteSelected}
+                    onCancel={() => setShowDeleteConfirm(false)}
+                    saving={saving}
+                    saveText="Elimina"
+                    cancelText="Annulla"
+                >
+                    <div className={styles.deleteConfirmText}>
+                        Sei sicuro di voler eliminare {selectedItems.length === 1 ? 'questo progetto' : `i ${selectedItems.length} progetti selezionati`}?
+                    </div>
+                </ModalContainer>
             )}
         </div>
     );

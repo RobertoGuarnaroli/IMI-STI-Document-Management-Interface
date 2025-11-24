@@ -3,11 +3,13 @@ export interface IProjectsProps {
 }
 
 export interface IProjectItem{
+    key: number;
     Id?: number;
 	ProjectCode?: string;
     Title?: string;
     Customer?: string;
-    ProjectManager?: string;
+    ProjectManagerId?: number;
+    ProjectManagerTitle?: string;
     Status?: string;
     StartDate?: string;
     EndDate?: string;

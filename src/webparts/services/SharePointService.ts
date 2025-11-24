@@ -103,6 +103,36 @@ export class ProjectsService {
         }
     }
 
+    /**
+     * Aggiorna un progetto esistente dato l'ID e i nuovi dati
+     */
+    public async updateProject(itemId: number, project: {
+        ProjectCode: string;
+        Title: string;
+        Customer: string;
+        ProjectManagerId?: number;
+        Status: string;
+        StartDate: string;
+        EndDate: string;
+        Notes: string;
+    }): Promise<void> {
+        try {
+            await this.sp.web.lists.getByTitle("Projects").items.getById(itemId).update({
+                ProjectCode: project.ProjectCode,
+                Title: project.Title,
+                Customer: project.Customer,
+                ProjectManagerId: project.ProjectManagerId,
+                Status: project.Status,
+                StartDate: project.StartDate,
+                EndDate: project.EndDate,
+                Notes: project.Notes
+            });
+        } catch (error) {
+            console.error("Errore nell'aggiornamento del progetto:", error);
+            throw error;
+        }
+    }
+
     public async getStatusChoices(): Promise<string[]> {
         try {
             const field = await this.sp.web.lists.getByTitle("Projects").fields.getByInternalNameOrTitle("Status")();
