@@ -100,10 +100,15 @@ export const Alerts: React.FC<IAlertsProps> = ({ context }) => {
                         <DetailsList
                             items={items}
                             columns={columns}
-                            setKey="set"
-                            layoutMode={DetailsListLayoutMode.justified}
-                            constrainMode={ConstrainMode.unconstrained}
+                            setKey="multiple"
+                            selectionMode={2}
+                            selectionPreservedOnEmptyClick={true}
+                            layoutMode={DetailsListLayoutMode.fixedColumns}
+                            constrainMode={ConstrainMode.horizontalConstrained}
                             isHeaderVisible={true}
+                            ariaLabelForSelectionColumn="Toggle selection"
+                            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+                            checkButtonAriaLabel="select row"
                         />
                     )}
                 </div>

@@ -296,14 +296,14 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
 
     const columns: IColumn[] = [
         { key: 'ProjectCode', name: 'Project Code', fieldName: 'ProjectCode', minWidth: 80, maxWidth: 120, isResizable: true },
-        { key: 'Title', name: 'Title', fieldName: 'Title', minWidth: 120, maxWidth: 200, isResizable: true },
-        { key: 'Customer', name: 'Customer', fieldName: 'Customer', minWidth: 120, maxWidth: 200, isResizable: true },
+        { key: 'Title', name: 'Title', fieldName: 'Title', minWidth: 80, maxWidth: 120, isResizable: true },
+        { key: 'Customer', name: 'Customer', fieldName: 'Customer', minWidth: 80, maxWidth: 120, isResizable: true },
         {
             key: 'ProjectManager',
             name: 'Project Manager',
             fieldName: 'ProjectManager',
-            minWidth: 180,
-            maxWidth: 250,
+            minWidth: 80,
+            maxWidth: 120,
             isResizable: true,
             onRender: (item) => (
                 item.ProjectManager.Title ? (
@@ -316,13 +316,13 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
             )
         },
         { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 80, maxWidth: 120, isResizable: true },
-        { key: 'StartDate', name: 'Start Date', fieldName: 'StartDate', onRender: (item) => formatDate(item.StartDate), minWidth: 100, maxWidth: 140, isResizable: true },
-        { key: 'EndDate', name: 'End Date', fieldName: 'EndDate', onRender: (item) => formatDate(item.EndDate), minWidth: 100, maxWidth: 140, isResizable: true },
-        { key: 'Notes', name: 'Notes', fieldName: 'Notes', minWidth: 120, maxWidth: 200, isResizable: true },
-        { key: 'CreatedBy', name: 'Created By', fieldName: 'CreatedBy', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.CreatedBy || '' },
-        { key: 'Created', name: 'Created', fieldName: 'Created', onRender: (item) => formatDate(item.Created), minWidth: 100, maxWidth: 140, isResizable: true },
-        { key: 'ModifiedBy', name: 'Modified By', fieldName: 'ModifiedBy', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.ModifiedBy || '' },
-        { key: 'Modified', name: 'Modified', fieldName: 'Modified', onRender: (item) => formatDate(item.Modified), minWidth: 100, maxWidth: 140, isResizable: true },
+        { key: 'StartDate', name: 'Start Date', fieldName: 'StartDate', onRender: (item) => formatDate(item.StartDate), minWidth: 80, maxWidth: 120, isResizable: true },
+        { key: 'EndDate', name: 'End Date', fieldName: 'EndDate', onRender: (item) => formatDate(item.EndDate), minWidth: 80, maxWidth: 120, isResizable: true },
+        { key: 'Notes', name: 'Notes', fieldName: 'Notes', minWidth: 80, maxWidth: 120, isResizable: true },
+        { key: 'CreatedBy', name: 'Created By', fieldName: 'CreatedBy', minWidth: 80, maxWidth: 120, isResizable: true, onRender: (item) => item.CreatedBy || '' },
+        { key: 'Created', name: 'Created', fieldName: 'Created', onRender: (item) => formatDate(item.Created), minWidth: 80, maxWidth: 120, isResizable: true },
+        { key: 'ModifiedBy', name: 'Modified By', fieldName: 'ModifiedBy', minWidth: 80, maxWidth: 120, isResizable: true, onRender: (item) => item.ModifiedBy || '' },
+        { key: 'Modified', name: 'Modified', fieldName: 'Modified', onRender: (item) => formatDate(item.Modified), minWidth: 80, maxWidth: 120, isResizable: true },
     ];
 
     return (
@@ -402,14 +402,13 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                             selectionMode={2}
                             selection={selectionRef.current!}
                             selectionPreservedOnEmptyClick={true}
-                            layoutMode={DetailsListLayoutMode.justified}
+                            layoutMode={DetailsListLayoutMode.fixedColumns}
                             constrainMode={ConstrainMode.horizontalConstrained}
                             isHeaderVisible={true}
                             ariaLabelForSelectionColumn="Toggle selection"
                             ariaLabelForSelectAllCheckbox="Toggle selection for all items"
                             checkButtonAriaLabel="select row"
                         />
-
                     )}
                 </div>
             )}

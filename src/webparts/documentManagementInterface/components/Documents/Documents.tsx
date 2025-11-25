@@ -83,8 +83,15 @@ export const Documents: React.FC<IDocumentsProps> = ({ context }) => {
                         <DetailsList
                             items={items}
                             columns={columns}
-                            layoutMode={DetailsListLayoutMode.justified}
-                            constrainMode={ConstrainMode.unconstrained}
+                            setKey="multiple"
+                            selectionMode={2}
+                            selectionPreservedOnEmptyClick={true}
+                            layoutMode={DetailsListLayoutMode.fixedColumns}
+                            constrainMode={ConstrainMode.horizontalConstrained}
+                            isHeaderVisible={true}
+                            ariaLabelForSelectionColumn="Toggle selection"
+                            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+                            checkButtonAriaLabel="select row"
                         />
                     )}
                 </div>

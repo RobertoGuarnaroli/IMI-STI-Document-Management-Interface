@@ -78,9 +78,15 @@ export const Transmittals: React.FC<ITransmittalsProps> = ({ context }) => {
                         <DetailsList
                             items={items}
                             columns={columns}
-                            setKey="set"
+                            setKey="multiple"
+                            selectionMode={2}
+                            selectionPreservedOnEmptyClick={true}
                             layoutMode={DetailsListLayoutMode.fixedColumns}
-                            constrainMode={ConstrainMode.unconstrained}
+                            constrainMode={ConstrainMode.horizontalConstrained}
+                            isHeaderVisible={true}
+                            ariaLabelForSelectionColumn="Toggle selection"
+                            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+                            checkButtonAriaLabel="select row"
                         />
                     )}
                 </div>

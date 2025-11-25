@@ -1,0 +1,16 @@
+.dragDropArea {
+  border: 2px dashed #e1d8f1;
+  border-radius: 8px;
+  padding: 24px;
+  background: #fff;
+  text-align: center;
+  transition: border 0.2s, background 0.2s;
+  cursor: pointer;
+  color: #441f53;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.dragDropAreaActive {
+  border: 2px solid #441f53;
+  background: #f9f7fb;
+}

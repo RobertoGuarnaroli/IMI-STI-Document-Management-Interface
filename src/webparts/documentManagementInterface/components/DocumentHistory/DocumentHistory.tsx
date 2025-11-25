@@ -94,10 +94,15 @@ export const DocumentHistory: React.FC<IDocumentHistoryProps> = ({ context }) =>
                         <DetailsList
                             items={items}
                             columns={columns}
-                            setKey="documentHistoryList"
+                            setKey="multiple"
+                            selectionMode={2}
+                            selectionPreservedOnEmptyClick={true}
                             layoutMode={DetailsListLayoutMode.fixedColumns}
-                            constrainMode={ConstrainMode.unconstrained}
-                            selectionMode={0}
+                            constrainMode={ConstrainMode.horizontalConstrained}
+                            isHeaderVisible={true}
+                            ariaLabelForSelectionColumn="Toggle selection"
+                            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+                            checkButtonAriaLabel="select row"
                         />
                     )}
                 </div>

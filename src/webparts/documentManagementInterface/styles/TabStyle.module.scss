@@ -1,19 +1,17 @@
 // ============================================
 // IMI STI - BRAND VARIABLES
 // ============================================
-$imi-purple: #441f53;        // Viola scuro istituzionale
-$imi-purple-light: #e1d8f1;  // Lilla per bordi/linee sottili
-$imi-bg-light: #f9f7fb;      // Sfondo quasi bianco con tinta viola
-$imi-text-dark: #333333;     // Testo principale (più leggibile del viola puro)
-$imi-text-muted: #5a4d62;    // Testo secondario
-$imi-danger: #d32f2f;        // Rosso per azioni distruttive
+$imi-purple: #441f53;
+$imi-purple-light: #e1d8f1;
+$imi-bg-light: #f9f7fb;
+$imi-text-dark: #333333;
+$imi-text-muted: #5a4d62;
+$imi-danger: #d32f2f;
 
-// Radius System (Più squadrato per look ingegneristico)
 $radius-sm: 4px;
 $radius-md: 6px;
 $radius-lg: 8px;
 
-// Breakpoints
 $breakpoint-sm: 640px;
 $breakpoint-md: 768px;
 $breakpoint-lg: 1024px;
@@ -42,7 +40,7 @@ $breakpoint-xl: 1280px;
   text-align: center;
   color: $imi-text-muted;
   background-color: #ffffff;
-  border: 1px dashed $imi-purple-light; // Bordo tratteggiato tecnico
+  border: 1px dashed $imi-purple-light;
   border-radius: $radius-md;
   font-size: 1rem;
   font-weight: 500;
@@ -58,9 +56,9 @@ $breakpoint-xl: 1280px;
 // LIST CONTAINER (Table Wrapper)
 // ============================================
 .listContainer {
-  box-shadow: 0 4px 12px rgba(68, 31, 83, 0.08); // Ombra leggermente più profonda
+  box-shadow: 0 4px 12px rgba(68, 31, 83, 0.08);
   border: 1px solid $imi-purple-light;
-  border-top: 4px solid $imi-purple; // Accento Brand Superiore
+  border-top: 4px solid $imi-purple;
   border-radius: $radius-lg;
   padding: 12px;
   width: 100%;
@@ -68,73 +66,23 @@ $breakpoint-xl: 1280px;
   overflow-x: auto;
   background: #ffffff;
 
-  // Tablet
-  @media (min-width: $breakpoint-md) {
-    padding: 16px;
-  }
+  @media (min-width: $breakpoint-md) { padding: 16px; }
+  @media (min-width: $breakpoint-lg) { padding: 24px; }
 
-  // Desktop
-  @media (min-width: $breakpoint-lg) {
-    padding: 24px; // Più spazio su desktop
-  }
-
-  // Mobile: scroll fix
   @media (max-width: #{$breakpoint-md - 1px}) {
     -webkit-overflow-scrolling: touch;
     :global {
       .ms-DetailsList {
-        min-width: 800px; 
+        min-width: 800px;
       }
     }
   }
 }
 
-// ============================================
-// DETAILSLIST OVERRIDES
-// ============================================
-:global {
-  // Intestazione Tabella
-  .ms-DetailsHeader {
-    border-bottom: 2px solid $imi-purple-light;
-    padding-top: 12px;
-    padding-bottom: 12px;
 
-    .ms-DetailsHeader-cellTitle {
-      color: $imi-purple;
-      font-weight: 700;
-      text-transform: uppercase; // Stile tecnico
-      font-size: 12px; // Più piccolo ma uppercase
-      letter-spacing: 0.5px;
-    }
-  }
-
-  // Righe
-  .ms-DetailsRow {
-    border-bottom: 1px solid lighten($imi-purple-light, 10%);
-    
-    // Hover Row Effect
-    &:hover {
-      background-color: $imi-bg-light; 
-      .ms-DetailsRow-cell {
-        color: $imi-purple; // Testo diventa viola all'hover
-      }
-    }
-  }
-  // Mobile Tweaks
-  @media (max-width: #{$breakpoint-md - 1px}) {
-    .ms-DetailsHeader-cellTitle { padding: 8px; }
-    .ms-DetailsRow-cell { font-size: 13px; padding: 10px 8px; }
-  }
-
-  // Desktop Tweaks
-  @media (min-width: $breakpoint-lg) {
-    .ms-DetailsHeader-cellTitle { font-size: 13px; padding: 10px 12px; }
-    .ms-DetailsRow-cell { font-size: 14px; padding: 12px; }
-  }
-}
 
 // ============================================
-// GRID LAYOUT (Cards)
+// RESTO DEL FILE INVARIATO (CARDS, FILTER, BUTTONS, DELETE)
 // ============================================
 .cardsGrid {
   display: grid;
@@ -147,137 +95,11 @@ $breakpoint-xl: 1280px;
   @media (min-width: $breakpoint-xl) { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
 }
 
-// ============================================
-// CARD COMPONENT
-// ============================================
-.card {
-  background: #ffffff;
-  border: 1px solid $imi-purple-light;
-  border-radius: $radius-lg;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(68, 31, 83, 0.05);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-
-  // Striscia laterale "invisibile" che appare all'hover
-  border-left: 4px solid transparent; 
-
-  &:hover {
-    box-shadow: 0 8px 16px rgba(68, 31, 83, 0.12);
-    transform: translateY(-2px);
-    border-color: darken($imi-purple-light, 10%);
-    border-left-color: $imi-purple; // Accento viola a sinistra
-  }
-
-  @media (min-width: $breakpoint-md) { padding: 20px; }
-}
-
-.cardTitle {
-  font-size: 16px;
-  font-weight: 600;
-  color: $imi-purple;
-  margin-bottom: 8px;
-  line-height: 1.4;
-
-  @media (min-width: $breakpoint-lg) { font-size: 17px; }
-}
-
-.cardContent {
-  font-size: 14px;
-  color: $imi-text-muted;
-  line-height: 1.6;
-  border-top: 1px solid $imi-bg-light;
-  padding-top: 12px;
-  margin-top: 12px;
-}
-
-// ============================================
-// EMPTY STATE (Icon + Text)
-// ============================================
-.emptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  text-align: center;
-  background: $imi-bg-light;
-  border-radius: $radius-lg;
-  color: $imi-text-muted;
-
-  i {
-    font-size: 48px;
-    margin-bottom: 16px;
-    color: lighten($imi-purple, 20%); // Viola sbiadito
-    
-    @media (min-width: $breakpoint-lg) { font-size: 64px; }
-  }
-
-  p {
-    font-size: 16px;
-    margin: 0;
-    font-weight: 500;
-  }
-}
-
-// ============================================
-// FILTER BAR
-// ============================================
-.filterBar {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: $imi-bg-light; // Sfondo light purple
-  border: 1px solid $imi-purple-light;
-  border-radius: $radius-md;
-  margin-bottom: 16px;
-
-  @media (min-width: $breakpoint-sm) {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-end; // Allinea input e bottoni
-  }
-}
-
-.filterItem {
-  flex: 1;
-  min-width: 200px;
-  @media (max-width: #{$breakpoint-sm - 1px}) { min-width: 100%; }
-}
-
-// ============================================
-// ACTION BUTTONS
-// ============================================
-.actionButtons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-
-  @media (min-width: $breakpoint-sm) {
-    flex-direction: row;
-    gap: 12px;
-  }
-
-  button {
-    width: 100%;
-    @media (min-width: $breakpoint-sm) { width: auto; }
-    
-    // Esempio stile bottone outline
-    border-radius: $radius-sm;
-    transition: background 0.2s;
-  }
-}
-
-.deleteConfirmText {
-  font-size: 1.1rem;
-  color: $imi-purple;
-  font-weight: 600;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: lighten($imi-danger, 45%);
-  border-left: 4px solid $imi-danger;
-  border-radius: 0 $radius-sm $radius-sm 0;
-}
+.card { background: #fff; border: 1px solid $imi-purple-light; border-radius: $radius-lg; padding: 16px; box-shadow: 0 2px 4px rgba(68,31,83,0.05); transition: all 0.2s; cursor: pointer; overflow: hidden; border-left: 4px solid transparent; &:hover { box-shadow: 0 8px 16px rgba(68,31,83,0.12); transform: translateY(-2px); border-color: darken($imi-purple-light, 10%); border-left-color: $imi-purple; } @media (min-width: $breakpoint-md) { padding: 20px; }}
+.cardTitle { font-size: 16px; font-weight: 600; color: $imi-purple; margin-bottom: 8px; line-height: 1.4; @media (min-width: $breakpoint-lg) { font-size: 17px; }}
+.cardContent { font-size: 14px; color: $imi-text-muted; line-height: 1.6; border-top: 1px solid $imi-bg-light; padding-top: 12px; margin-top: 12px; }
+.emptyState { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; text-align: center; background: $imi-bg-light; border-radius: $radius-lg; color: $imi-text-muted; i { font-size: 48px; margin-bottom: 16px; color: lighten($imi-purple, 20%); @media (min-width: $breakpoint-lg) { font-size: 64px; }} p { font-size: 16px; margin: 0; font-weight: 500; }}
+.filterBar { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: $imi-bg-light; border: 1px solid $imi-purple-light; border-radius: $radius-md; margin-bottom: 16px; @media (min-width: $breakpoint-sm) { flex-direction: row; flex-wrap: wrap; align-items: flex-end; }}
+.filterItem { flex: 1; min-width: 200px; @media (max-width: #{$breakpoint-sm - 1px}) { min-width: 100%; }}
+.actionButtons { display: flex; flex-direction: column; gap: 8px; @media (min-width: $breakpoint-sm) { flex-direction: row; gap: 12px; } button { width: 100%; @media (min-width: $breakpoint-sm) { width: auto; } border-radius: $radius-sm; transition: background 0.2s; }}
+.deleteConfirmText { font-size: 1.1rem; color: $imi-purple; font-weight: 600; margin-bottom: 16px; padding: 12px; background: lighten($imi-danger, 45%); border-left: 4px solid $imi-danger; border-radius: 0 $radius-sm $radius-sm 0; }

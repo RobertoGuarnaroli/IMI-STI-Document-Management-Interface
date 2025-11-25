@@ -2,6 +2,7 @@ export interface IFilesProps{
     context: any;
 }
 export interface IFileItem {
+  Id?: number;
   Created?: string;
   Modified?: string;
   FileName?: string;
