@@ -120,7 +120,6 @@ $breakpoint-xl: 1280px;
       }
     }
   }
-
   // Mobile Tweaks
   @media (max-width: #{$breakpoint-md - 1px}) {
     .ms-DetailsHeader-cellTitle { padding: 8px; }

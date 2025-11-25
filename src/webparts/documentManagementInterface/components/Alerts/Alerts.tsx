@@ -27,7 +27,7 @@ export const Alerts: React.FC<IAlertsProps> = ({ context }) => {
                     Priority: item.Priority || '',
                     DaysOverdue: item.DaysOverdue || 0,
                     ExpectedDate: item.ExpectedDate || '',
-                    Message: item.Message || '',
+                    Message: typeof item.Message === 'object' && item.Message !== null && 'value' in item.Message ? item.Message.value : (item.Message || ''),
                     AssignedTo: item.AssignedTo ? {
                         Id: item.AssignedTo.Id,
                         Title: item.AssignedTo.Title,
@@ -54,14 +54,36 @@ export const Alerts: React.FC<IAlertsProps> = ({ context }) => {
         if (isNaN(d.getTime())) return dateStr;
         return d.toLocaleDateString();
     };
+
+    // Utility to strip HTML tags from a string
+    const stripHtml = (html: string) => {
+        if (!html) return '';
+        return html.replace(/<[^>]+>/g, '');
+    };
     const columns: IColumn[] = [
-        { key: 'ProjectCode', name: 'Project Code', fieldName: 'ProjectCode.ProjectCode', minWidth: 80, maxWidth: 120, isResizable: true },
-        { key: 'DocumentId', name: 'Document ID', fieldName: 'DocumentId.DocumentCode', minWidth: 80, maxWidth: 120, isResizable: true },
+        {
+            key: 'ProjectCode',
+            name: 'Project Code',
+            fieldName: 'ProjectCode',
+            minWidth: 80,
+            maxWidth: 120,
+            isResizable: true,
+            onRender: (item) => item.ProjectCode ? item.ProjectCode.ProjectCode : ''
+        },
+        {
+            key: 'DocumentId',
+            name: 'Document ID',
+            fieldName: 'DocumentId',
+            minWidth: 80,
+            maxWidth: 120,
+            isResizable: true,
+            onRender: (item) => item.DocumentId ? item.DocumentId.DocumentCode : ''
+        },
         { key: 'AlertType', name: 'Alert Type', fieldName: 'AlertType', minWidth: 100, maxWidth: 150, isResizable: true },
         { key: 'Priority', name: 'Priority', fieldName: 'Priority', minWidth: 80, maxWidth: 120, isResizable: true },
         { key: 'DaysOverdue', name: 'Days Overdue', fieldName: 'DaysOverdue', minWidth: 80, maxWidth: 120, isResizable: true },
         { key: 'ExpectedDate', name: 'Expected Date', fieldName: 'ExpectedDate', minWidth: 100, maxWidth: 150, isResizable: true, onRender: (item) => formatDate(item.ExpectedDate) },
-        { key: 'Message', name: 'Message', fieldName: 'Message', minWidth: 200, maxWidth: 300, isResizable: true },
+        { key: 'Message', name: 'Message', fieldName: 'Message', minWidth: 200, maxWidth: 300, isResizable: true, onRender: (item) => stripHtml(item.Message) },
         { key: 'AssignedTo', name: 'Assigned To', fieldName: 'AssignedTo.Title', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.AssignedTo ? item.AssignedTo.Title : '' },
         { key: 'IsResolved', name: 'Resolved', fieldName: 'IsResolved', minWidth: 80, maxWidth: 100, isResizable: true, onRender: (item) => item.IsResolved ? 'Yes' : 'No' },
         { key: 'ResolvedDate', name: 'Resolved Date', fieldName: 'ResolvedDate', minWidth: 100, maxWidth: 150, isResizable: true, onRender: (item) => formatDate(item.ResolvedDate) },

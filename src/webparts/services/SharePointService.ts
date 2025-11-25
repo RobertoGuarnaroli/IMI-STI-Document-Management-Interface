@@ -316,9 +316,19 @@ export class AlertsService {
                 .select(
                     "*",
                     "ProjectCode/Id",
+                    "ProjectCode/ProjectCode",
                     "DocumentId/Id",
+                    "DocumentId/DocumentCode",
+                    "AlertType",
+                    "Priority",
+                    "DaysOverdue",
+                    "ExpectedDate",
+                    "Message",
                     "AssignedTo/Id",
                     "AssignedTo/Title",
+                    "AssignedTo/EMail",
+                    "IsResolved",
+                    "ResolvedDate"
                 )
                 .expand("ProjectCode", "DocumentId", "AssignedTo")();
             console.log('Raw SharePoint items:', items);

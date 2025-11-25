@@ -398,12 +398,16 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                         <DetailsList
                             items={items}
                             columns={columns}
-                            setKey="set"
+                            setKey="multiple"
                             selectionMode={2}
                             selection={selectionRef.current!}
                             selectionPreservedOnEmptyClick={true}
                             layoutMode={DetailsListLayoutMode.justified}
                             constrainMode={ConstrainMode.horizontalConstrained}
+                            isHeaderVisible={true}
+                            ariaLabelForSelectionColumn="Toggle selection"
+                            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+                            checkButtonAriaLabel="select row"
                         />
 
                     )}
