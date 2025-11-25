@@ -6,6 +6,7 @@ import { ProjectsService, UsersService } from '../../../services/SharePointServi
 import { IProjectsProps, IProjectItem } from './IProjectsProps';
 import styles from '../../styles/TabStyle.module.scss';
 import { LoadingSpinner } from '../Spinner/Spinner';
+import { ExcelUpload, IExcelData } from '../ExcelUpload/ExcelUpload';
 import { PeoplePicker } from '../PeoplePicker/PeoplePicker';
 import { Persona, PersonaSize } from '@fluentui/react/lib/Persona';
 import { DatePicker } from '@fluentui/react/lib/DatePicker';
@@ -23,6 +24,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
     const [formError, setFormError] = React.useState<string | null>(null);
     const [dateError, setDateError] = React.useState<string | null>(null);
     const [showError, setShowError] = React.useState(false);
+    const [touched, setTouched] = React.useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
     const [statusOptions, setStatusOptions] = React.useState<{ key: string; text: string }[]>([]);
     const [selectedItems, setSelectedItems] = React.useState<IProjectItem[]>([]);
@@ -63,7 +65,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
     const fetchProjects = async (): Promise<void> => {
         try {
             const service = new ProjectsService(context);
-            const userProfileService = new (await import('../../../services/SharePointService')).UserProfileService(context);
+            const userProfileService = new (await import(/* webpackChunkName: 'SharePointService' */ '../../../services/SharePointService')).UserProfileService(context);
             const data = await service.getProjects();
             const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
             const mapped: IProjectItem[] = await Promise.all(data.map(async (item) => {
@@ -102,7 +104,8 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
         }
     };
 
-    const handleSaveProject = async () => {
+    const handleSaveProject = async (): Promise<void> => {
+        setTouched(true);
         setDateError(null);
         setFormError(null);
         setShowError(false);
@@ -155,7 +158,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
             await fetchProjects();
         } catch (error: unknown) {
             // Mostra solo il messaggio principale di errore
-            let errorMsg = 'Errore durante la creazione del progetto.';
+            const errorMsg = 'Errore durante la creazione del progetto.';
             if (typeof error === 'object' && error !== null) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const err = error as any;
@@ -300,6 +303,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                                     EndDate: '',
                                     Notes: ''
                                 });
+                                setTouched(false);
                                 setIsModalOpen(true);
                             },
                             disabled: false,
@@ -371,9 +375,63 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                     isOpen={isModalOpen}
                     title="Crea nuovo Project"
                     onSave={handleSaveProject}
-                    onCancel={() => setIsModalOpen(false)}
+                    onCancel={() => {
+                        setNewProject({
+                            ProjectCode: '',
+                            Title: '',
+                            Customer: '',
+                            ProjectManagerId: undefined,
+                            ProjectManagerTitle: '',
+                            Status: '',
+                            StartDate: '',
+                            EndDate: '',
+                            Notes: ''
+                        });
+                        setTouched(false);
+                        setIsModalOpen(false);
+                    }}
                     saving={saving}
                 >
+                    <ExcelUpload
+                        onDataExtracted={async (data: IExcelData) => {
+                            setNewProject(p => ({
+                                ...p,
+                                ProjectCode: data.ProjectCode || '',
+                                Title: data.Title || '',
+                                Customer: data.Customer || '',
+                                Status: data.Status || '',
+                                StartDate: data.StartDate || '',
+                                EndDate: data.EndDate || '',
+                                Notes: data.Notes || ''
+                            }));
+                            if (data.ProjectManager) {
+                                const usersService = new UsersService(context);
+                                const users = await usersService.getUsers();
+                                const found = users.find(u => u.secondaryText && u.secondaryText.toLowerCase() === data.ProjectManager!.toLowerCase());
+                                if (found) {
+                                    setNewProject(p => ({
+                                        ...p,
+                                        ProjectManagerId: found.id ? Number(found.id) : undefined,
+                                        ProjectManagerTitle: found.text || ''
+                                    }));
+                                }
+                            }
+                        }}
+                        onClear={() => {
+                            setNewProject({
+                                ProjectCode: '',
+                                Title: '',
+                                Customer: '',
+                                ProjectManagerId: undefined,
+                                ProjectManagerTitle: '',
+                                Status: '',
+                                StartDate: '',
+                                EndDate: '',
+                                Notes: ''
+                            });
+                        }}
+                        disabled={saving}
+                    />
                     <TextField label="Project Code" value={newProject.ProjectCode} onChange={(_, v) => setNewProject(p => ({ ...p, ProjectCode: v || '' }))} required />
                     <TextField label="Title" value={newProject.Title} onChange={(_, v) => setNewProject(p => ({ ...p, Title: v || '' }))} required />
                     <TextField label="Customer" value={newProject.Customer} onChange={(_, v) => setNewProject(p => ({ ...p, Customer: v || '' }))} required />
@@ -419,7 +477,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                         onSelectDate={date => setNewProject(p => ({ ...p, StartDate: date ? date.toISOString().substring(0, 10) : '' }))}
                         placeholder="DD-MM-YYYY"
                         formatDate={d => d ? d.toLocaleDateString() : ''}
-                        isRequired={true}
+                        isRequired={touched}
                     />
                     <DatePicker
                         label="End Date"
@@ -427,7 +485,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                         onSelectDate={date => setNewProject(p => ({ ...p, EndDate: date ? date.toISOString().substring(0, 10) : '' }))}
                         placeholder="DD-MM-YYYY"
                         formatDate={d => d ? d.toLocaleDateString() : ''}
-                        isRequired={true}
+                        isRequired={touched}
                     />
                     <TextField label="Notes" multiline rows={3} value={newProject.Notes} onChange={(_, v) => setNewProject(p => ({ ...p, Notes: v || '' }))} />
                 </ModalContainer>

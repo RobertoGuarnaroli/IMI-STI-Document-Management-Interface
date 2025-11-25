@@ -1,0 +1,61 @@
+@import '../../styles/TabStyle.module.scss';
+.hiddenInput {
+  display: none;
+}
+
+.uploadButton {
+  background-color: $imi-purple !important;
+  border-color: $imi-purple !important;
+}
+.uploadButton:hover {
+  background-color: darken($imi-purple, 8%) !important;
+  border-color: darken($imi-purple, 8%) !important;
+}
+
+.cancelButton {
+  margin-left: 8px;
+}
+
+.messageBar {
+  margin-top: 12px;
+}
+.excelUploadContainer {
+  padding: 16px;
+  border: 2px dashed $imi-purple;
+  border-radius: $radius-lg;
+  background: $imi-bg-light;
+  margin-bottom: 20px;
+}
+
+.uploadSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.helpText {
+  margin-top: 12px;
+  padding: 12px;
+  background: #ffffff;
+  border-left: 4px solid #217346;
+    border-left: 4px solid $imi-purple;
+    border-radius: $radius-sm;
+    color: $imi-text-dark;
+
+  strong {
+    display: block;
+    margin-bottom: 8px;
+      color: $imi-purple;
+  }
+
+  ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+    
+    li {
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+  }
+}
