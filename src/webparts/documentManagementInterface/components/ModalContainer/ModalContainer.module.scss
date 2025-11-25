@@ -36,6 +36,8 @@
   pointer-events: auto;
   animation: modalFadeIn 0.35s cubic-bezier(0.4, 0.2, 0.2, 1);
   position: relative;
+  max-height: 80vh;
+  overflow-y: auto;
 
   h2 {
     margin-top: 0;
@@ -66,12 +68,3 @@
   }
 }
 
-// Optional: add a subtle border or accent
-.modalContainer::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 18px;
-  border: 1.5px solid #e2d6f3;
-  pointer-events: none;
-}

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { DetailsList, IColumn, DetailsListLayoutMode, ConstrainMode } from '@fluentui/react/lib/DetailsList';
 import { TextField } from '@fluentui/react/lib/TextField';
-import { Dropdown, IDropdownOption } from '@fluentui/react/lib/Dropdown';
+import { Dropdown } from '@fluentui/react/lib/Dropdown';
 import { ProjectsService, UsersService } from '../../../services/SharePointService';
 import { IProjectsProps, IProjectItem } from './IProjectsProps';
 import styles from '../../styles/TabStyle.module.scss';
@@ -18,6 +18,24 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
     const [items, setItems] = React.useState<IProjectItem[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+    const [saving, setSaving] = React.useState(false);
+    const [formError, setFormError] = React.useState<string | null>(null);
+    const [dateError, setDateError] = React.useState<string | null>(null);
+    const [showError, setShowError] = React.useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+    const [statusOptions, setStatusOptions] = React.useState<{ key: string; text: string }[]>([]);
+    const [selectedItems, setSelectedItems] = React.useState<IProjectItem[]>([]);
+    const [editProjectId, setEditProjectId] = React.useState<number | null>(null);
+    // Ref per la selezione della lista
+    const selectionRef = React.useRef<Selection>(
+        new Selection({
+            onSelectionChanged: () => {
+                const sel = selectionRef.current.getSelection() as IProjectItem[];
+                setSelectedItems(sel);
+            }
+        })
+    );
     const [newProject, setNewProject] = React.useState({
         ProjectCode: '',
         Title: '',
@@ -41,35 +59,48 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
         EndDate: '',
         Notes: ''
     });
-    const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
-
-    // Stato per la modifica
-    const [editProjectId, setEditProjectId] = React.useState<number | null>(null);
-    const [statusOptions, setStatusOptions] = React.useState<IDropdownOption[]>([]);
-    const [saving, setSaving] = React.useState(false);
-    const [dateError, setDateError] = React.useState<string | null>(null);
-    const [showError, setShowError] = React.useState(false);
-    const [formError, setFormError] = React.useState<string | null>(null);
-    const selectionRef = React.useRef<Selection | null>(null);
-    const [selectedItems, setSelectedItems] = React.useState<IProjectItem[]>([]);
-    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
-
-    React.useEffect(() => {
-        if (!selectionRef.current) {
-            selectionRef.current = new Selection({
-                onSelectionChanged: () => {
-                    const selected = selectionRef.current?.getSelection() as IProjectItem[];
-                    setSelectedItems(selected);
+    // Funzione fetchProjects a livello di componente
+    const fetchProjects = async (): Promise<void> => {
+        try {
+            const service = new ProjectsService(context);
+            const userProfileService = new (await import('../../../services/SharePointService')).UserProfileService(context);
+            const data = await service.getProjects();
+            const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
+            const mapped: IProjectItem[] = await Promise.all(data.map(async (item) => {
+                let projectManagerPicture = undefined;
+                if (item.ProjectManager && item.ProjectManager.Id) {
+                    projectManagerPicture = await userProfileService.getUserProfilePicture(item.ProjectManager.Id);
                 }
-            });
+                return {
+                    key: item.Id,
+                    Id: item.Id,
+                    ProjectCode: item.ProjectCode || '',
+                    Title: item.Title || '',
+                    Customer: item.Customer || '',
+                    ProjectManager: {
+                        Title: item.ProjectManager?.Title || '',
+                        Id: item.ProjectManager?.Id || undefined,
+                        Picture: projectManagerPicture
+                    },
+                    Status: item.Status || '',
+                    StartDate: item.StartDate || '',
+                    EndDate: item.EndDate || '',
+                    Notes: item.Notes ? stripHtml(item.Notes) : '',
+                    Modified: item.Modified || '',
+                    Created: item.Created || '',
+                    CreatedBy: item.Author?.Title || '',
+                    ModifiedBy: item.Editor?.Title || '',
+                    context: context
+                };
+            }));
+            setItems(mapped);
+            console.log('Fetched projects:', mapped);
+        } catch {
+            setItems([]);
+        } finally {
+            setLoading(false);
         }
-    }, []);
-
-    React.useEffect(() => {
-        if (selectionRef.current) {
-            selectionRef.current.setItems(items, true);
-        }
-    }, [items]);
+    };
 
     const handleSaveProject = async () => {
         setDateError(null);
@@ -121,30 +152,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
             setNewProject({ ProjectCode: '', Title: '', Customer: '', ProjectManagerId: undefined, ProjectManagerTitle: '', Status: '', StartDate: '', EndDate: '', Notes: '' });
             setLoading(true);
             // Ricarica la lista
-            const data = await service.getProjects();
-            const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
-            const mapped: IProjectItem[] = data.map((item) => ({
-                key: item.Id,
-                Id: item.Id,
-                ProjectCode: item.ProjectCode || '',
-                Title: item.Title || '',
-                Customer: item.Customer || '',
-                ProjectManager: {
-                    Title: item.ProjectManager?.Title || '',
-                    Id: item.ProjectManager?.Id || undefined,
-                    Picture: item.ProjectManager?.Picture || undefined
-                },
-                Status: item.Status || '',
-                StartDate: item.StartDate || '',
-                EndDate: item.EndDate || '',
-                Notes: item.Notes ? stripHtml(item.Notes) : '',
-                Modified: item.Modified || '',
-                Created: item.Created || '',
-                CreatedBy: item.Author?.Title || '',
-                ModifiedBy: item.Editor?.Title || '',
-                context: context
-            }));
-            setItems(mapped);
+            await fetchProjects();
         } catch (error: unknown) {
             // Mostra solo il messaggio principale di errore
             let errorMsg = 'Errore durante la creazione del progetto.';
@@ -152,33 +160,13 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const err = error as any;
                 // Caso SharePoint REST (PnPjs): estrai solo il messaggio leggibile
-                if (err.data?.odata?.error?.message?.value) {
-                    // Esempio: "The list item could not be added or updated because duplicate values were found in the following field(s) in the list: [ProjectCode]."
-                    errorMsg = err.data.odata.error.message.value;
-                } else if (err.message && typeof err.message === 'string') {
-                    // Se il messaggio contiene JSON, estrai solo la parte leggibile
-                    try {
-                        const parsed = JSON.parse(err.message);
-                        if (parsed?.odata?.error?.message?.value) {
-                            errorMsg = parsed.odata.error.message.value;
-                        } else {
-                            errorMsg = err.message;
-                        }
-                    } catch {
-                        errorMsg = err.message;
-                    }
-                } else if (err.responseText && typeof err.responseText === 'string') {
-                    // Alcuni errori custom
-                    errorMsg = err.responseText;
-                }
+                if (err.data?.odata?.error?.message?.value) {/* Lines 156-158 omitted */} else if (err.message && typeof err.message === 'string') {/* Lines 159-170 omitted */} else if (err.responseText && typeof err.responseText === 'string') {/* Lines 171-173 omitted */}
             }
             // Mostra solo la parte "leggibile" (senza prefissi tecnici)
             if (errorMsg.includes('::>')) {
                 // Es: "Error making HttpClient request in queryable [500] ::> {json}"
                 const match = errorMsg.match(/\{"odata.error":\{"code":"[^"]+","message":\{"lang":"[^"]+","value":"([^"]+)"/);
-                if (match && match[1]) {
-                    errorMsg = match[1];
-                }
+                if (match && match[1]) {/* Lines 180-181 omitted */}
             }
             setFormError(errorMsg);
             setShowError(true);
@@ -233,40 +221,6 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
     };
 
     React.useEffect(() => {
-        const fetchProjects = async (): Promise<void> => {
-            try {
-                const service = new ProjectsService(context);
-                const data = await service.getProjects();
-                const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
-                const mapped: IProjectItem[] = data.map((item) => ({
-                    key: item.Id,
-                    Id: item.Id,
-                    ProjectCode: item.ProjectCode || '',
-                    Title: item.Title || '',
-                    Customer: item.Customer || '',
-                    ProjectManager: {
-                        Title: item.ProjectManager?.Title || '',
-                        Id: item.ProjectManager?.Id || undefined,
-                        Picture: item.ProjectManager?.Picture || undefined
-                    },
-                    Status: item.Status || '',
-                    StartDate: item.StartDate || '',
-                    EndDate: item.EndDate || '',
-                    Notes: item.Notes ? stripHtml(item.Notes) : '',
-                    Modified: item.Modified || '',
-                    Created: item.Created || '',
-                    CreatedBy: item.Author?.Title || '',
-                    ModifiedBy: item.Editor?.Title || '',
-                    context: context
-                }));
-                setItems(mapped);
-                console.log('Fetched projects:', mapped);
-            } catch {
-                setItems([]);
-            } finally {
-                setLoading(false);
-            }
-        };
         void fetchProjects();
     }, []);
 
@@ -400,7 +354,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                             columns={columns}
                             setKey="multiple"
                             selectionMode={2}
-                            selection={selectionRef.current!}
+                            selection={selectionRef.current}
                             selectionPreservedOnEmptyClick={true}
                             layoutMode={DetailsListLayoutMode.fixedColumns}
                             constrainMode={ConstrainMode.horizontalConstrained}

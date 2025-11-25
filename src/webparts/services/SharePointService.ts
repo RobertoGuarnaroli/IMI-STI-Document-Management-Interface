@@ -1,3 +1,4 @@
+
 import { spfi, SPFx, SPFI } from "@pnp/sp";
 import "@pnp/sp/webs";
 import "@pnp/sp/lists";
@@ -30,7 +31,7 @@ export class UsersService {
     try {
       const users = await this.sp.web.siteUsers
         .filter("PrincipalType eq 1") // 1 = utenti, no gruppi
-        .top(200)(); // aumentabile se necessario
+        .top(5000)(); // aumentabile se necessario
 
       return users.map((u: any) => ({
         text: u.Title,
@@ -40,6 +41,47 @@ export class UsersService {
     } catch (error) {
       console.error("Errore nel recupero degli utenti:", error);
       return [];
+    }
+  }
+}
+
+/*===================================================================================
+    USER PROFILE SERVICE
+====================================================================================*/
+
+export class UserProfileService {
+  private sp: SPFI;
+
+  constructor(context: WebPartContext) {
+    this.sp = spfi().using(SPFx(context));
+  }
+
+  /**
+   * Recupera la URL dell'immagine profilo di un utente dato l'ID o l'email
+   * @param userIdOrEmail ID numerico o email dell'utente
+   * @returns URL dell'immagine profilo o stringa vuota
+   */
+  public async getUserProfilePicture(userIdOrEmail: number | string): Promise<string> {
+    try {
+      let loginName: string | undefined;
+      if (typeof userIdOrEmail === 'number') {
+        // Recupera loginName da ID
+        const user = await this.sp.web.siteUsers.getById(userIdOrEmail)();
+        loginName = user.LoginName;
+      } else {
+        // Recupera loginName da email
+        const users = await this.sp.web.siteUsers.filter(`Email eq '${userIdOrEmail}'`)();
+        if (users && users.length > 0) {
+          loginName = users[0].LoginName;
+        }
+      }
+      if (!loginName) return '';
+      // Ottieni la URL della foto profilo
+      const photoUrl = `${this.sp.web.toUrl()}/_layouts/15/userphoto.aspx?size=L&accountname=${encodeURIComponent(loginName)}`;
+      return photoUrl;
+    } catch (error) {
+      console.error('Errore nel recupero della foto profilo:', error);
+      return '';
     }
   }
 }
@@ -171,6 +213,7 @@ export class ProjectsService {
 ====================================================================================*/
 
 export class DocumentsService {
+    
   private sp: SPFI;
 
   constructor(context: WebPartContext) {
@@ -199,6 +242,46 @@ export class DocumentsService {
       throw error;
     }
   }
+
+  /**
+     * Inserisce un nuovo documento nella lista Documents
+     */
+    public async createDocument(document: {
+      DocumentCode: string;
+      Title: string;
+      Revision: string;
+      Status: string;
+      IssuePurpose: string;
+      ApprovalCode: string;
+      SentDate?: string;
+      ExpectedReturnDate?: string;
+      ActualReturnDate?: string;
+      TurnaroundDays?: number;
+      DaysLate?: number;
+      AssignedToId?: number;
+      Notes?: string;
+    }): Promise<void> {
+      try {
+        await this.sp.web.lists.getByTitle("Documents").items.add({
+          DocumentCode: document.DocumentCode,
+          Title: document.Title,
+          Revision: document.Revision,
+          Status: document.Status,
+          IssuePurpose: document.IssuePurpose,
+          ApprovalCode: document.ApprovalCode,
+          SentDate: document.SentDate,
+          ExpectedReturnDate: document.ExpectedReturnDate,
+          ActualReturnDate: document.ActualReturnDate,
+          TurnaroundDays: document.TurnaroundDays,
+          DaysLate: document.DaysLate,
+          AssignedToId: document.AssignedToId,
+          Notes: document.Notes,
+        });
+      } catch (error) {
+        console.error("Errore durante l'inserimento del documento:", error);
+        throw error;
+      }
+    }
 }
 
 /*===================================================================================
