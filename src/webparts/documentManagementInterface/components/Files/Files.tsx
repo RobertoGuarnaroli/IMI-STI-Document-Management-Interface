@@ -1,12 +1,16 @@
 import * as React from 'react';
 import { DetailsList, IColumn, DetailsListLayoutMode, ConstrainMode, Selection } from '@fluentui/react/lib/DetailsList';
 import { DefaultButton } from '@fluentui/react';
-import { FilesService } from '../../../services/SharePointService';
+import { FilesService, DocumentsService } from '../../../services/SharePointService';
 import { IFilesProps, IFileItem } from './IFilesProps';
 import styles from '../../styles/TabStyle.module.scss';
 import { LoadingSpinner } from '../Spinner/Spinner';
 import { FileUpload } from '../FileUpload/FileUpload';
+import { DocumentMetadataForm } from './DocumentMetadataForm';
+import { IDocumentMetadataProps } from './IDocumentMetadataFormProps';
 import { ModalContainer } from '../ModalContainer/ModalContainer';
+import { UserHoverCardSmart } from '../UserHoverCard/UserHoverCard';
+
 export const Files: React.FC<IFilesProps> = ({ context }) => {
     const [selectedFiles, setSelectedFiles] = React.useState<IFileItem[]>([]);
     const selection = React.useRef(new Selection({
@@ -17,15 +21,17 @@ export const Files: React.FC<IFilesProps> = ({ context }) => {
     const [uploading, setUploading] = React.useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
     const [saving, setSaving] = React.useState(false);
-
     const [items, setItems] = React.useState<IFileItem[]>([]);
     const [loading, setLoading] = React.useState(true);
-    const handleDeleteFiles = async () => {
+    const [showMetadataModal, setShowMetadataModal] = React.useState(false);
+    const [pendingFile, setPendingFile] = React.useState<File | null>(null);
+
+    const handleDeleteFiles = async (): Promise<void> => {
         if (selectedFiles.length === 0) return;
         setShowDeleteConfirm(true);
-    };
+    }
 
-    const handleConfirmDelete = async () => {
+    const handleConfirmDelete = async (): Promise<void> => {
         setSaving(true);
         try {
             const service = new FilesService(context);
@@ -47,7 +53,7 @@ export const Files: React.FC<IFilesProps> = ({ context }) => {
             setSelectedFiles([]);
             selection.current.setAllSelected(false);
             setShowDeleteConfirm(false);
-        } catch (error) {
+        } catch {
             alert('Errore durante l\'eliminazione dei file');
         } finally {
             setSaving(false);
@@ -55,13 +61,24 @@ export const Files: React.FC<IFilesProps> = ({ context }) => {
         }
     };
 
-    const handleFileUpload = async (file: File) => {
+    // Step 1: User selects file, show metadata modal
+    const handleFileUpload = (file: File): void => {
+        setPendingFile(file);
+        setShowMetadataModal(true);
+    };
+
+    // Step 2: User submits metadata, upload file and create Document
+    const handleMetadataSubmit = async (metadata: IDocumentMetadataProps): Promise<void> => {
+        if (!pendingFile) return;
+        setShowMetadataModal(false);
         setUploading(true);
         try {
-            const service = new FilesService(context);
-            await service.uploadFile(file);
+            const filesService = new FilesService(context);
+            await filesService.uploadFile(pendingFile);
+            const documentsService = new DocumentsService(context);
+            await documentsService.createDocument(metadata);
             // Refresh list after upload
-            const data = await service.getFiles();
+            const data = await filesService.getFiles();
             const mapped: IFileItem[] = data.map((item) => ({
                 Id: item.Id,
                 FileName: item.FileLeafRef || '',
@@ -72,12 +89,15 @@ export const Files: React.FC<IFilesProps> = ({ context }) => {
                 ModifiedBy: item.Editor?.Title,
             }));
             setItems(mapped);
-        } catch (error) {
-            alert('Errore durante il caricamento del file');
+        } catch {
+            alert('Error while uploading the file and creating the Document record');
         } finally {
             setUploading(false);
+            setUploading(false);
+            setPendingFile(null);
         }
     };
+
     React.useEffect(() => {
         const fetchFiles = async (): Promise<void> => {
             try {
@@ -94,31 +114,82 @@ export const Files: React.FC<IFilesProps> = ({ context }) => {
                 }));
                 setItems(mapped);
                 console.log('Fetched files:', mapped);
-            }
-            catch {
-                setItems([]);
-            }
-            finally {
+            } catch {
+                // Optionally handle error, e.g. set error state
+            } finally {
                 setLoading(false);
             }
         };
         void fetchFiles();
-    }
-        , []);
-    const formatDate = (dateStr?: string) => {
-        if (!dateStr) return '';
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return dateStr;
-        return d.toLocaleDateString();
-    }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Define columns outside of render to avoid re-creation on each render
     const columns: IColumn[] = [
-        { key: 'FileName', name: 'File Name', fieldName: 'FileName', minWidth: 120, maxWidth: 200, isResizable: true },
-        { key: 'CheckedOutTo', name: 'Checked Out To', fieldName: 'CheckedOutTo', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.CheckedOutTo ? item.CheckedOutTo.Title : '' },
-        { key: 'CreatedBy', name: 'Created By', fieldName: 'CreatedBy', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.CreatedBy || '' },
-        { key: 'Created', name: 'Created', fieldName: 'Created', onRender: (item) => formatDate(item.Created), minWidth: 100, maxWidth: 140, isResizable: true },
-        { key: 'ModifiedBy', name: 'Modified By', fieldName: 'ModifiedBy', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.ModifiedBy || '' },
-        { key: 'Modified', name: 'Modified', fieldName: 'Modified', onRender: (item) => formatDate(item.Modified), minWidth: 100, maxWidth: 140, isResizable: true },
+        {
+            key: 'FileName',
+            name: 'FileName',
+            fieldName: 'FileName',
+            minWidth: 100,
+            maxWidth: 200,
+            isResizable: true,
+        },
+        {
+            key: 'CreatedBy',
+            name: 'CreatedBy',
+            fieldName: 'CreatedBy',
+            minWidth: 100,
+            maxWidth: 200,
+            isResizable: true,
+            onRender: (item) => {
+                if (!item.CreatedBy || !item.CreatedBy.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.CreatedBy.EMail}
+                        displayName={item.CreatedBy.Title}
+                        pictureUrl={item.CreatedBy.Picture}
+                        context={context}
+                    />
+                );
+            }
+        },
+        {
+            key: 'Created',
+            name: 'Created',
+            fieldName: 'Created',
+            minWidth: 100,
+            maxWidth: 200,
+            isResizable: true,
+        },
+        {
+            key: 'ModifiedBy',
+            name: 'ModifiedBy',
+            fieldName: 'ModifiedBy',
+            minWidth: 100,
+            maxWidth: 200,
+            isResizable: true,
+            onRender: (item) => {
+                if (!item.ModifiedBy || !item.ModifiedBy.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.ModifiedBy.EMail}
+                        displayName={item.ModifiedBy.Title}
+                        pictureUrl={item.ModifiedBy.Picture}
+                        context={context}
+                    />
+                );
+            }
+        },
+        {
+            key: 'Modified',
+            name: 'Modified',
+            fieldName: 'Modified',
+            minWidth: 100,
+            maxWidth: 200,
+            isResizable: true,
+        },
     ];
+
     return (
         <div className={styles.container}>
             <FileUpload onUpload={handleFileUpload} disabled={uploading || loading} />
@@ -128,6 +199,21 @@ export const Files: React.FC<IFilesProps> = ({ context }) => {
                 disabled={uploading || loading || selectedFiles.length === 0}
                 style={{ marginBottom: 12 }}
             />
+            {showMetadataModal && (
+                <ModalContainer
+                    isOpen={showMetadataModal}
+                    title="Document Metadata"
+                    onCancel={() => { setShowMetadataModal(false); setPendingFile(null); }}
+                >
+                    <DocumentMetadataForm
+                        context={context}
+                        initialValues={pendingFile ? { DocumentCode: pendingFile.name, Title: pendingFile.name } : {}}
+                        onSubmit={handleMetadataSubmit}
+                        onCancel={() => { setShowMetadataModal(false); setPendingFile(null); }}
+                        saving={uploading}
+                    />
+                </ModalContainer>
+            )}
             {loading ? (
                 <LoadingSpinner />
             ) : (

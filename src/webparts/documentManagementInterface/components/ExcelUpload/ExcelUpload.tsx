@@ -121,13 +121,13 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
       if (!jsonData || jsonData.length === 0) {
-        throw new Error('Il file Excel è vuoto o non contiene dati validi');
+        throw new Error('The Excel file is empty or does not contain valid data');
       }
 
-      // Prendi la prima riga di dati (dopo l'header)
+      // Take the first data row (after header)
       const firstRow = jsonData[0] as any;
 
-      // Estrai i dati usando i mappings
+      // Extract data using mappings
       const extractedData: IExcelData = {
         ProjectCode: findColumnValue(firstRow, 'ProjectCode'),
         Title: findColumnValue(firstRow, 'Title'),
@@ -139,7 +139,7 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
         Notes: findColumnValue(firstRow, 'Notes')
       };
 
-      // Formatta le date se presenti
+      // Format dates if present
       if (extractedData.StartDate) {
         const dateValue = extractedData.StartDate;
         if (typeof dateValue === 'number') {
@@ -173,13 +173,13 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
         }
       }
 
-      console.log('Dati estratti da Excel:', extractedData);
+      console.log('Extracted data from Excel:', extractedData);
 
-      // Verifica che almeno un campo sia popolato
+      // Check that at least one field is populated
       const hasData = Object.values(extractedData).some(v => v !== undefined && v !== '');
       
       if (!hasData) {
-        throw new Error('Nessun dato valido trovato nel file Excel. Verifica i nomi delle colonne.');
+        throw new Error('No valid data found in the Excel file. Check the column names.');
       }
 
       onDataExtracted(extractedData);
@@ -191,8 +191,8 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
       }
 
     } catch (err: any) {
-      console.error('Errore parsing Excel:', err);
-      setError(err.message || 'Errore durante la lettura del file Excel');
+      console.error('Excel parsing error:', err);
+      setError(err.message || 'Error reading the Excel file');
     } finally {
       setLoading(false);
     }
@@ -201,10 +201,10 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Verifica estensione
+      // Check extension
       const fileName = file.name.toLowerCase();
       if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-        setError('Formato file non supportato. Usa file .xlsx o .xls');
+        setError('Unsupported file format. Use .xlsx or .xls files');
         return;
       }
 
@@ -226,7 +226,7 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
         />
         
         <PrimaryButton
-          text={loading ? 'Caricamento...' : 'Carica Excel'}
+          text={loading ? 'Loading...' : 'Upload Excel'}
           iconProps={{ iconName: 'ExcelDocument' }}
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || loading}
@@ -234,7 +234,7 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
         />
 
         <DefaultButton
-          text="Cancella"
+          text="Clear"
           iconProps={{ iconName: 'Cancel' }}
           onClick={() => {
             setError(null);
@@ -256,7 +256,7 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
           messageBarType={MessageBarType.error}
           isMultiline={false}
           onDismiss={() => setError(null)}
-          dismissButtonAriaLabel="Chiudi"
+          dismissButtonAriaLabel="Close"
           className={styles.messageBar}
         >
           {error}
@@ -268,19 +268,19 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
           messageBarType={MessageBarType.success}
           isMultiline={false}
           onDismiss={() => setSuccess(false)}
-          dismissButtonAriaLabel="Chiudi"
+          dismissButtonAriaLabel="Close"
           className={styles.messageBar}
         >
-          Dati estratti con successo! Verifica i campi nel form.
+          Data extracted successfully! Check the fields in the form.
         </MessageBar>
       )}
 
       <div className={styles.helpText}>
-        <strong>Formato Excel richiesto:</strong>
+        <strong>Required Excel format:</strong>
         <ul>
-          <li>Prima riga: intestazioni colonne</li>
-          <li>Seconda riga: dati del documento</li>
-          <li>Colonne supportate: IMI RTI DOCUMENT NUMBER, DOCUMENT TITLE, ecc.</li>
+          <li>First row: column headers</li>
+          <li>Second row: document data</li>
+          <li>Supported columns: Project Code, Title, Customer, Status etc.</li>
         </ul>
       </div>
     </div>

@@ -8,7 +8,7 @@ import styles from '../../styles/TabStyle.module.scss';
 import { LoadingSpinner } from '../Spinner/Spinner';
 import { ExcelUpload, IExcelData } from '../ExcelUpload/ExcelUpload';
 import { PeoplePicker } from '../PeoplePicker/PeoplePicker';
-import { Persona, PersonaSize } from '@fluentui/react/lib/Persona';
+import { UserHoverCardSmart } from '../UserHoverCard/UserHoverCard';
 import { DatePicker } from '@fluentui/react/lib/DatePicker';
 import { ModalContainer } from '../ModalContainer/ModalContainer';
 import { ErrorPopUp } from '../ErrorPopUp/ErrorPopUp';
@@ -70,8 +70,8 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
             const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
             const mapped: IProjectItem[] = await Promise.all(data.map(async (item) => {
                 let projectManagerPicture = undefined;
-                if (item.ProjectManager && item.ProjectManager.Id) {
-                    projectManagerPicture = await userProfileService.getUserProfilePicture(item.ProjectManager.Id);
+                if (item.ProjectManager && item.ProjectManager.EMail) {
+                    projectManagerPicture = await userProfileService.getUserProfilePicture(item.ProjectManager.EMail);
                 }
                 return {
                     key: item.Id,
@@ -82,6 +82,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                     ProjectManager: {
                         Title: item.ProjectManager?.Title || '',
                         Id: item.ProjectManager?.Id || undefined,
+                        EMail: item.ProjectManager?.EMail || '',
                         Picture: projectManagerPicture
                     },
                     Status: item.Status || '',
@@ -240,7 +241,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
     React.useEffect(() => {
         if (isModalOpen && !editProjectId) {
             setNewProject(p => ({ ...p, Status: 'Active' }));
-            setStatusOptions([{ key: 'Active', text: 'Active' }]);
+            // Non limitare statusOptions qui, lascia tutte le opzioni
         }
     }, [isModalOpen, editProjectId]);
 
@@ -262,15 +263,17 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
             minWidth: 80,
             maxWidth: 120,
             isResizable: true,
-            onRender: (item) => (
-                item.ProjectManager.Title ? (
-                    <Persona
-                        text={item.ProjectManager.Title}
-                        size={PersonaSize.size32}
-                        imageUrl={item.ProjectManager.Picture}
+            onRender: (item) => {
+                if (!item.ProjectManager.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.ProjectManager.EMail}
+                        displayName={item.ProjectManager.Title}
+                        pictureUrl={item.ProjectManager.Picture}
+                        context={context}
                     />
-                ) : ''
-            )
+                );
+            }
         },
         { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 80, maxWidth: 120, isResizable: true },
         { key: 'StartDate', name: 'Start Date', fieldName: 'StartDate', onRender: (item) => formatDate(item.StartDate), minWidth: 80, maxWidth: 120, isResizable: true },
