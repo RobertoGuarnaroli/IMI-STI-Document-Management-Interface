@@ -23,6 +23,7 @@ export interface IAlertItem {
     Id: number;
     Title: string;
     EMail: string;
+    Picture?: string;
   };
   IsResolved: boolean;
   ResolvedDate?: string;

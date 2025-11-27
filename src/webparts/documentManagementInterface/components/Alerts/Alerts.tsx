@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { DetailsList, IColumn, DetailsListLayoutMode, ConstrainMode } from '@fluentui/react/lib/DetailsList';
-import { AlertsService } from '../../../services/SharePointService';
+import { AlertsService, UsersService } from '../../../services/SharePointService';
 import { IAlertsProps, IAlertItem } from './IAlertsProps';
 import styles from '../../styles/TabStyle.module.scss';
 import { LoadingSpinner } from '../Spinner/Spinner';
+import { UserHoverCardSmart } from '../UserHoverCard/UserHoverCard';
 
 export const Alerts: React.FC<IAlertsProps> = ({ context }) => {
     const [items, setItems] = React.useState<IAlertItem[]>([]);
@@ -12,8 +13,9 @@ export const Alerts: React.FC<IAlertsProps> = ({ context }) => {
         const fetchAlerts = async (): Promise<void> => {
             try {
                 const service = new AlertsService(context);
+                const userService = new UsersService(context);
                 const data = await service.getAlerts();
-                const mapped: IAlertItem[] = data.map((item) => ({
+                const mapped: IAlertItem[] = await Promise.all(data.map(async (item) => ({
                     Id: item.Id,
                     ProjectCode: item.ProjectCode ? {
                         Id: item.ProjectCode.Id,
@@ -31,11 +33,12 @@ export const Alerts: React.FC<IAlertsProps> = ({ context }) => {
                     AssignedTo: item.AssignedTo ? {
                         Id: item.AssignedTo.Id,
                         Title: item.AssignedTo.Title,
-                        EMail: item.AssignedTo.EMail
+                        EMail: item.AssignedTo.EMail,
+                        Picture: item.AssignedTo.EMail ? await userService.getUserProfilePictureByEmail(item.AssignedTo.EMail) : undefined
                     } : undefined,
                     IsResolved: item.IsResolved || false,
                     ResolvedDate: item.ResolvedDate || '',
-                }));
+                })));
                 setItems(mapped);
                 console.log('Fetched alerts:', mapped);
             }
@@ -84,7 +87,25 @@ export const Alerts: React.FC<IAlertsProps> = ({ context }) => {
         { key: 'DaysOverdue', name: 'Days Overdue', fieldName: 'DaysOverdue', minWidth: 80, maxWidth: 120, isResizable: true },
         { key: 'ExpectedDate', name: 'Expected Date', fieldName: 'ExpectedDate', minWidth: 100, maxWidth: 150, isResizable: true, onRender: (item) => formatDate(item.ExpectedDate) },
         { key: 'Message', name: 'Message', fieldName: 'Message', minWidth: 200, maxWidth: 300, isResizable: true, onRender: (item) => stripHtml(item.Message) },
-        { key: 'AssignedTo', name: 'Assigned To', fieldName: 'AssignedTo.Title', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.AssignedTo ? item.AssignedTo.Title : '' },
+        {
+            key: 'AssignedTo',
+            name: 'Assigned To',
+            fieldName: 'AssignedTo.Title',
+            minWidth: 120,
+            maxWidth: 200,
+            isResizable: true,
+            onRender: (item) => {
+                if (!item.AssignedTo.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.AssignedTo.EMail}
+                        displayName={item.AssignedTo.Title}
+                        pictureUrl={item.AssignedTo.Picture}
+                        context={context}
+                    />
+                );
+            }
+        },
         { key: 'IsResolved', name: 'Resolved', fieldName: 'IsResolved', minWidth: 80, maxWidth: 100, isResizable: true, onRender: (item) => item.IsResolved ? 'Yes' : 'No' },
         { key: 'ResolvedDate', name: 'Resolved Date', fieldName: 'ResolvedDate', minWidth: 100, maxWidth: 150, isResizable: true, onRender: (item) => formatDate(item.ResolvedDate) },
     ];

@@ -65,14 +65,10 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
     const fetchProjects = async (): Promise<void> => {
         try {
             const service = new ProjectsService(context);
-            const userProfileService = new (await import(/* webpackChunkName: 'SharePointService' */ '../../../services/SharePointService')).UserProfileService(context);
+            const usersService = new UsersService(context);
             const data = await service.getProjects();
             const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
             const mapped: IProjectItem[] = await Promise.all(data.map(async (item) => {
-                let projectManagerPicture = undefined;
-                if (item.ProjectManager && item.ProjectManager.EMail) {
-                    projectManagerPicture = await userProfileService.getUserProfilePicture(item.ProjectManager.EMail);
-                }
                 return {
                     key: item.Id,
                     Id: item.Id,
@@ -83,16 +79,26 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                         Title: item.ProjectManager?.Title || '',
                         Id: item.ProjectManager?.Id || undefined,
                         EMail: item.ProjectManager?.EMail || '',
-                        Picture: projectManagerPicture
+                        Picture: item.ProjectManager?.EMail ? await usersService.getUserProfilePictureByEmail(item.ProjectManager.EMail) : undefined,
                     },
                     Status: item.Status || '',
                     StartDate: item.StartDate || '',
                     EndDate: item.EndDate || '',
                     Notes: item.Notes ? stripHtml(item.Notes) : '',
-                    Modified: item.Modified || '',
                     Created: item.Created || '',
-                    CreatedBy: item.Author?.Title || '',
-                    ModifiedBy: item.Editor?.Title || '',
+                    CreatedBy: {
+                        Title: item.Author?.Title || '',
+                        Id: item.Author?.Id || undefined,
+                        EMail: item.Author?.EMail || '',
+                        Picture: item.Author?.EMail ? await usersService.getUserProfilePictureByEmail(item.Author.EMail) : undefined
+                    },
+                    ModifiedBy: {
+                        Title: item.Editor?.Title || '',
+                        Id: item.Editor?.Id || undefined,
+                        EMail: item.Editor?.EMail || '',
+                        Picture: item.Editor?.EMail ? await usersService.getUserProfilePictureByEmail(item.Editor.EMail) : undefined
+                    },
+                    Modified: item.Modified || '',
                     context: context
                 };
             }));
@@ -164,13 +170,13 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const err = error as any;
                 // Caso SharePoint REST (PnPjs): estrai solo il messaggio leggibile
-                if (err.data?.odata?.error?.message?.value) {/* Lines 156-158 omitted */} else if (err.message && typeof err.message === 'string') {/* Lines 159-170 omitted */} else if (err.responseText && typeof err.responseText === 'string') {/* Lines 171-173 omitted */}
+                if (err.data?.odata?.error?.message?.value) {/* Lines 156-158 omitted */ } else if (err.message && typeof err.message === 'string') {/* Lines 159-170 omitted */ } else if (err.responseText && typeof err.responseText === 'string') {/* Lines 171-173 omitted */ }
             }
             // Mostra solo la parte "leggibile" (senza prefissi tecnici)
             if (errorMsg.includes('::>')) {
                 // Es: "Error making HttpClient request in queryable [500] ::> {json}"
                 const match = errorMsg.match(/\{"odata.error":\{"code":"[^"]+","message":\{"lang":"[^"]+","value":"([^"]+)"/);
-                if (match && match[1]) {/* Lines 180-181 omitted */}
+                if (match && match[1]) {/* Lines 180-181 omitted */ }
             }
             setFormError(errorMsg);
             setShowError(true);
@@ -231,7 +237,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
     React.useEffect(() => {
         const fetchStatusOptions = async (): Promise<void> => {
             const service = new ProjectsService(context);
-            const choices = await service.getStatusChoices();
+            const choices = await service.getFieldChoices("Projects", "Status");
             setStatusOptions(choices.map(choice => ({ key: choice, text: choice })));
         };
         void fetchStatusOptions();
@@ -279,9 +285,45 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
         { key: 'StartDate', name: 'Start Date', fieldName: 'StartDate', onRender: (item) => formatDate(item.StartDate), minWidth: 80, maxWidth: 120, isResizable: true },
         { key: 'EndDate', name: 'End Date', fieldName: 'EndDate', onRender: (item) => formatDate(item.EndDate), minWidth: 80, maxWidth: 120, isResizable: true },
         { key: 'Notes', name: 'Notes', fieldName: 'Notes', minWidth: 80, maxWidth: 120, isResizable: true },
-        { key: 'CreatedBy', name: 'Created By', fieldName: 'CreatedBy', minWidth: 80, maxWidth: 120, isResizable: true, onRender: (item) => item.CreatedBy || '' },
+        {
+            key: 'CreatedBy',
+            name: 'Created By',
+            fieldName: 'CreatedBy',
+            minWidth: 80,
+            maxWidth: 120,
+            isResizable: true,
+            onRender: (item) => {
+                if (!item.CreatedBy.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.CreatedBy.EMail}
+                        displayName={item.CreatedBy.Title}
+                        pictureUrl={item.CreatedBy.Picture}
+                        context={context}
+                    />
+                );
+            }
+        },
         { key: 'Created', name: 'Created', fieldName: 'Created', onRender: (item) => formatDate(item.Created), minWidth: 80, maxWidth: 120, isResizable: true },
-        { key: 'ModifiedBy', name: 'Modified By', fieldName: 'ModifiedBy', minWidth: 80, maxWidth: 120, isResizable: true, onRender: (item) => item.ModifiedBy || '' },
+        {
+            key: 'ModifiedBy',
+            name: 'Modified By',
+            fieldName: 'ModifiedBy',
+            minWidth: 80,
+            maxWidth: 120,
+            isResizable: true,
+            onRender: (item) => {
+                if (!item.ModifiedBy.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.ModifiedBy.EMail}
+                        displayName={item.ModifiedBy.Title}
+                        pictureUrl={item.ModifiedBy.Picture}
+                        context={context}
+                    />
+                );
+            }
+        },
         { key: 'Modified', name: 'Modified', fieldName: 'Modified', onRender: (item) => formatDate(item.Modified), minWidth: 80, maxWidth: 120, isResizable: true },
     ];
 
@@ -403,14 +445,32 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                                 Title: data.Title || '',
                                 Customer: data.Customer || '',
                                 Status: data.Status || '',
-                                StartDate: data.StartDate || '',
-                                EndDate: data.EndDate || '',
+                                StartDate: data.StartDate instanceof Date
+                                    ? data.StartDate.toISOString().substring(0, 10)
+                                    : (data.StartDate || ''),
+                                EndDate: data.EndDate instanceof Date
+                                    ? data.EndDate.toISOString().substring(0, 10)
+                                    : (data.EndDate || ''),
                                 Notes: data.Notes || ''
                             }));
-                            if (data.ProjectManager) {
+                            // Se c'è una mail, cerca per mail, altrimenti per ProjectManager
+                            const emailToSearch = data.ProjectManager || (data.ProjectManager && data.ProjectManager.includes('@') ? data.ProjectManager : undefined);
+                            if (emailToSearch) {
                                 const usersService = new UsersService(context);
                                 const users = await usersService.getUsers();
-                                const found = users.find(u => u.secondaryText && u.secondaryText.toLowerCase() === data.ProjectManager!.toLowerCase());
+                                const found = users.find(u => u.secondaryText && u.secondaryText.toLowerCase() === emailToSearch.toLowerCase());
+                                if (found) {
+                                    setNewProject(p => ({
+                                        ...p,
+                                        ProjectManagerId: found.id ? Number(found.id) : undefined,
+                                        ProjectManagerTitle: found.text || ''
+                                    }));
+                                }
+                            } else if (data.ProjectManager) {
+                                // fallback: cerca per displayName
+                                const usersService = new UsersService(context);
+                                const users = await usersService.getUsers();
+                                const found = users.find(u => u.text && u.text.toLowerCase() === data.ProjectManager!.toLowerCase());
                                 if (found) {
                                     setNewProject(p => ({
                                         ...p,
@@ -427,7 +487,7 @@ export const Projects: React.FC<IProjectsProps> = ({ context }) => {
                                 Customer: '',
                                 ProjectManagerId: undefined,
                                 ProjectManagerTitle: '',
-                                Status: '',
+                                Status: 'Active',
                                 StartDate: '',
                                 EndDate: '',
                                 Notes: ''

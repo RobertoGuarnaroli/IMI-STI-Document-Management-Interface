@@ -22,9 +22,13 @@ export interface ITransmittalItem {
   CreatedBy?: {
     Id: number;
     Title: string;
+    EMail?: string;
+    Picture?: string;
   };
   ModifiedBy?: {
     Id: number;
     Title: string;
+    EMail?: string;
+    Picture?: string;
   };
 }

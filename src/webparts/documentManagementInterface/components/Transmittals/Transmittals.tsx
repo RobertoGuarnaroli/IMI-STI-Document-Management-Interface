@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { DetailsList, IColumn, DetailsListLayoutMode, ConstrainMode } from '@fluentui/react/lib/DetailsList';
-import { TransmittalsService } from '../../../services/SharePointService';
+import { TransmittalsService, UsersService } from '../../../services/SharePointService';
 import { ITransmittalsProps, ITransmittalItem } from './ITransmittalsProps';
 import styles from '../../styles/TabStyle.module.scss';
 import { LoadingSpinner } from '../Spinner/Spinner';
+import { UserHoverCardSmart } from '../UserHoverCard/UserHoverCard';
 
 export const Transmittals: React.FC<ITransmittalsProps> = ({ context }) => {
     const [items, setItems] = React.useState<ITransmittalItem[]>([]);
@@ -12,25 +13,38 @@ export const Transmittals: React.FC<ITransmittalsProps> = ({ context }) => {
         const fetchTransmittals = async (): Promise<void> => {
             try {
                 const service = new TransmittalsService(context);
+                const userService = new UsersService(context);
                 const data = await service.getTransmittals();
                 const stripHtml = (html: string) => html.replace(/<[^>]+>/g, '').trim();
-                const mapped: ITransmittalItem[] = data.map((item) => ({
-                    TransmittalNumber: item.TransmittalNumber || '',
-                    ProjectCode: item.ProjectCode.ProjectCode || '',
-                    ProjectTitle: item.ProjectCode.Title || '',
-                    RecipientEmail: item.RecipientEmail || '',
-                    RecipientName: item.RecipientName || '',
-                    SenderEmail: item.SenderEmail || '',
-                    SenderName: item.SenderName || '',
-                    SentDate: item.SentDate || '',
-                    Subject: item.Subject ? stripHtml(item.Notes) : '',
-                    Status: item.Status || '',
-                    Notes: item.Notes ? stripHtml(item.Notes) : '',
-                    Modified: item.Modified || '',
-                    Created: item.Created || '',
-                    CreatedBy: item.Author?.Title || '',
-                    ModifiedBy: item.Editor?.Title || '',
-                }));
+                const mapped: ITransmittalItem[] = await Promise.all(
+                    data.map(async (item) => ({
+                        TransmittalNumber: item.TransmittalNumber || '',
+                        ProjectCode: item.ProjectCode.ProjectCode || '',
+                        ProjectTitle: item.ProjectCode.Title || '',
+                        RecipientEmail: item.RecipientEmail || '',
+                        RecipientName: item.RecipientName || '',
+                        SenderEmail: item.SenderEmail || '',
+                        SenderName: item.SenderName || '',
+                        SentDate: item.SentDate || '',
+                        Subject: item.Subject ? stripHtml(item.Notes) : '',
+                        Status: item.Status || '',
+                        Notes: item.Notes ? stripHtml(item.Notes) : '',
+                        Modified: item.Modified || '',
+                        Created: item.Created || '',
+                        CreatedBy: {
+                            Id: item.Author?.Id || '',
+                            Title: item.Author?.Title || '',
+                            EMail: item.Author?.EMail || '',
+                            Picture: item.Author?.EMail ? await userService.getUserProfilePictureByEmail(item.Author.EMail) : undefined
+                        },
+                        ModifiedBy: {
+                            Id: item.Editor?.Id || '',
+                            Title: item.Editor?.Title || '',
+                            EMail: item.Editor?.EMail || '',
+                            Picture: item.Editor?.EMail ? await userService.getUserProfilePictureByEmail(item.Editor.EMail) : undefined
+                        }
+                    }))
+                );
                 setItems(mapped);
                 console.log('Fetched transmittals:', mapped);
             }
@@ -61,9 +75,45 @@ export const Transmittals: React.FC<ITransmittalsProps> = ({ context }) => {
         { key: 'Subject', name: 'Subject', fieldName: 'Subject', minWidth: 120, maxWidth: 200, isResizable: true },
         { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 80, maxWidth: 120, isResizable: true },
         { key: 'Notes', name: 'Notes', fieldName: 'Notes', minWidth: 120, maxWidth: 200, isResizable: true },
-        { key: 'CreatedBy', name: 'Created By', fieldName: 'CreatedBy', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.CreatedBy || '' },
+        {
+            key: 'CreatedBy',
+            name: 'Created By',
+            fieldName: 'CreatedBy',
+            minWidth: 120,
+            maxWidth: 200,
+            isResizable: true,
+            onRender: (item) => {
+                if (!item.CreatedBy.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.CreatedBy.EMail}
+                        displayName={item.CreatedBy.Title}
+                        pictureUrl={item.CreatedBy.Picture}
+                        context={context}
+                    />
+                );
+            }
+        },
         { key: 'Created', name: 'Created', fieldName: 'Created', onRender: (item) => formatDate(item.Created), minWidth: 100, maxWidth: 140, isResizable: true },
-        { key: 'ModifiedBy', name: 'Modified By', fieldName: 'ModifiedBy', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.ModifiedBy || '' },
+        {
+            key: 'ModifiedBy',
+            name: 'Modified By',
+            fieldName: 'ModifiedBy',
+            minWidth: 120,
+            maxWidth: 200,
+            isResizable: true,
+            onRender: (item) => {
+                if (!item.CreatedBy.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.ModifiedBy.EMail}
+                        displayName={item.ModifiedBy.Title}
+                        pictureUrl={item.ModifiedBy.Picture}
+                        context={context}
+                    />
+                );
+            }
+        },
         { key: 'Modified', name: 'Modified', fieldName: 'Modified', onRender: (item) => formatDate(item.Modified), minWidth: 100, maxWidth: 140, isResizable: true },
     ];
     return (

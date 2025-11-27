@@ -14,8 +14,8 @@ export interface IExcelData {
   Customer?: string;
   ProjectManager?: string;
   Status?: string;
-  StartDate?: string;
-  EndDate?: string;
+  StartDate?: string | Date;
+  EndDate?: string | Date;
   Notes?: string;
 }
 
@@ -59,7 +59,13 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
       'PROJECT_MANAGER',
       'Project Manager',
       'Responsabile',
-      'Manager'
+      'Manager',
+      'Project Manager Email',
+      'ProjectManagerEmail',
+      'Manager Email',
+      'Responsabile Email',
+      'Email Project Manager',
+      'Email Responsabile'
     ],
     Status: [
       'STATUS',
@@ -139,7 +145,7 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
         Notes: findColumnValue(firstRow, 'Notes')
       };
 
-      // Format dates if present
+      // Format dates if present: restituisci oggetti Date
       if (extractedData.StartDate) {
         const dateValue = extractedData.StartDate;
         if (typeof dateValue === 'number') {
@@ -148,11 +154,11 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
             excelDate.y,
             excelDate.m - 1,
             excelDate.d
-          ).toISOString().split('T')[0];
+          );
         } else if (typeof dateValue === 'string') {
           const parsed = new Date(dateValue);
           if (!isNaN(parsed.getTime())) {
-            extractedData.StartDate = parsed.toISOString().split('T')[0];
+            extractedData.StartDate = parsed;
           }
         }
       }
@@ -164,11 +170,11 @@ export const ExcelUpload: React.FC<IExcelUploadProps> = ({ onDataExtracted, onCl
             excelDate.y,
             excelDate.m - 1,
             excelDate.d
-          ).toISOString().split('T')[0];
+          );
         } else if (typeof dateValue === 'string') {
           const parsed = new Date(dateValue);
           if (!isNaN(parsed.getTime())) {
-            extractedData.EndDate = parsed.toISOString().split('T')[0];
+            extractedData.EndDate = parsed;
           }
         }
       }

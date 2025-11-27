@@ -8,9 +8,30 @@ import "@pnp/sp/webs";
 import "@pnp/sp/folders";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 import { IPersonaProps } from "@fluentui/react/lib/Persona";
-import { MSGraphClientV3 } from '@microsoft/sp-http';
+import { MSGraphClientV3 } from "@microsoft/sp-http";
 
 export type Project = Record<string, any>;
+
+export class ChoiceFieldService {
+  private sp: SPFI;
+  constructor(context: WebPartContext) {
+    this.sp = spfi().using(SPFx(context));
+  }
+    /**
+   * Recupera le opzioni di scelta per un campo di una lista
+   */
+  public async getFieldChoices(listName: string, fieldName: string): Promise<string[]> {
+    try {
+      const field = await this.sp.web.lists
+        .getByTitle(listName)
+        .fields.getByInternalNameOrTitle(fieldName)();
+      return field.Choices as string[];
+    } catch (error) {
+      console.error(`Errore nel recupero delle opzioni per ${fieldName} in ${listName}:`, error);
+      return [];
+    }
+  }
+}
 
 // ====================
 // 📌 USERS SERVICE
@@ -25,7 +46,7 @@ export class UsersService {
 
   private async getGraphClient(): Promise<MSGraphClientV3> {
     if (!this.graphClient) {
-      this.graphClient = await this.context.msGraphClientFactory.getClient('3');
+      this.graphClient = await this.context.msGraphClientFactory.getClient("3");
     }
     return this.graphClient;
   }
@@ -38,8 +59,9 @@ export class UsersService {
     try {
       const client = await this.getGraphClient();
       // Recupera i primi 999 utenti (modifica $top se necessario)
-      const result = await client.api('/users')
-        .select('id,displayName,mail,userPrincipalName,jobTitle,department')
+      const result = await client
+        .api("/users")
+        .select("id,displayName,mail,userPrincipalName,jobTitle,department")
         .top(999)
         .get();
       return (result.value || []).map((u: any) => ({
@@ -49,8 +71,8 @@ export class UsersService {
         id: u.id,
         data: {
           department: u.department,
-          userPrincipalName: u.userPrincipalName
-        }
+          userPrincipalName: u.userPrincipalName,
+        },
       }));
     } catch (error) {
       console.error("Errore nel recupero utenti da Graph:", error);
@@ -58,147 +80,46 @@ export class UsersService {
     }
   }
 
-  /**
-   * Recupera un singolo utente per ID
-   */
-  public async getUserById(userId: string): Promise<any> {
-    try {
-      const client = await this.getGraphClient();
-      const user = await client.api(`/users/${userId}`)
-        .select('id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation,mobilePhone,businessPhones')
-        .get();
-      return user;
-    } catch (error) {
-      console.error("Errore nel recupero utente da Graph:", error);
-      return null;
-    }
-  }
 
   /**
-   * Recupera un utente per email
-   */
-  public async getUserByEmail(email: string): Promise<any> {
-    try {
-      const client = await this.getGraphClient();
-      const result = await client.api('/users')
-        .filter(`mail eq '${email}' or userPrincipalName eq '${email}'`)
-        .select('id,displayName,mail,userPrincipalName,jobTitle,department')
-        .get();
-      return result.value && result.value.length > 0 ? result.value[0] : null;
-    } catch (error) {
-      console.error("Errore nel recupero utente per email da Graph:", error);
-      return null;
-    }
-  }
-
-  /**
-   * Recupera l'utente corrente
-   */
-  public async getCurrentUser(): Promise<any> {
-    try {
-      const client = await this.getGraphClient();
-      const user = await client.api('/me')
-        .select('id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation')
-        .get();
-      return user;
-    } catch (error) {
-      console.error("Errore nel recupero utente corrente da Graph:", error);
-      return null;
-    }
-  }
-}
-
-/*===================================================================================
-    USER PROFILE SERVICE
-====================================================================================*/
-
-export class UserProfileService {
-  private context: WebPartContext;
-  private graphClient: MSGraphClientV3 | null = null;
-
-  constructor(context: WebPartContext) {
-    this.context = context;
-  }
-
-  private async getGraphClient(): Promise<MSGraphClientV3> {
-    if (!this.graphClient) {
-      this.graphClient = await this.context.msGraphClientFactory.getClient('3');
-    }
-    return this.graphClient;
-  }
-
-  /**
-   * Recupera la URL dell'immagine profilo di un utente dato l'ID
-   * @param userId ID dell'utente da Microsoft Graph
+   * Recupera la URL dell'immagine profilo di un utente dato la mail o UPN
+   * @param email email o userPrincipalName
    * @returns URL dell'immagine profilo (blob) o stringa vuota
    */
-  public async getUserProfilePicture(userIdOrEmail: string): Promise<string> {
-  console.log("🚀 getUserProfilePicture called with:", userIdOrEmail);
-
-  try {
-    const client = await this.getGraphClient();
-
-    const guidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-    let userKey = userIdOrEmail;
-
-    if (!guidRegex.test(userIdOrEmail)) {
-      console.log("ℹ️ Input is not a GUID, trying to resolve via Graph...");
-      
-      const result = await client.api('/users')
-        .filter(`mail eq '${userIdOrEmail}' or userPrincipalName eq '${userIdOrEmail}'`)
-        .select('id,displayName,mail')
-        .get();
-
-      console.log("🔍 Graph lookup result:", result);
-
-      if (result.value && result.value.length > 0) {
-        userKey = result.value[0].id;
-        console.log("✅ Resolved userKey (GUID) for Graph:", userKey);
-      } else {
-        console.warn("⚠️ User not found in Graph for:", userIdOrEmail);
-        return ""; // oppure throw error se vuoi bloccare
-      }
-    } else {
-      console.log("ℹ️ Input is already a GUID:", userKey);
-    }
-
-    const photoBlob = await client.api(`/users/${userKey}/photo/$value`).get();
-    const url = window.URL.createObjectURL(photoBlob);
-    console.log("✅ Photo URL created:", url);
-    return url;
-
-  } catch (error) {
-    console.error("❌ Errore nel recupero della foto profilo:", error);
-    return "";
-  }
-}
-
-
-  /**
-   * Recupera la foto profilo dell'utente corrente
-   */
-  public async getCurrentUserProfilePicture(): Promise<string> {
+  public async getUserProfilePictureByEmail(email: string): Promise<string> {
     try {
       const client = await this.getGraphClient();
-      const photoBlob = await client.api('/me/photo/$value').get();
+      // Trova l'utente per email o UPN
+      const result = await client
+        .api("/users")
+        .filter(`mail eq '${email}' or userPrincipalName eq '${email}'`)
+        .select("id")
+        .get();
+      if (!result.value || result.value.length === 0) return "";
+      const userId = result.value[0].id;
+      const photoBlob = await client.api(`/users/${userId}/photo/$value`).get();
       const url = window.URL.createObjectURL(photoBlob);
       return url;
     } catch (error) {
-      console.error("Errore nel recupero della foto profilo corrente:", error);
       return "";
     }
   }
 
   /**
-   * Recupera il profilo completo di un utente
+   * Recupera il profilo completo di un utente dato la mail o UPN
    */
-  public async getUserProfile(userId: string): Promise<any> {
+  public async getUserProfileByEmail(email: string): Promise<any> {
     try {
       const client = await this.getGraphClient();
-      const profile = await client.api(`/users/${userId}`)
-        .select('id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation,mobilePhone,businessPhones,city,country,postalCode,state,streetAddress')
+      const result = await client
+        .api("/users")
+        .filter(`mail eq '${email}' or userPrincipalName eq '${email}'`)
+        .select(
+          "id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation,mobilePhone,businessPhones,city,country,postalCode,state,streetAddress"
+        )
         .get();
-      return profile;
+      if (!result.value || result.value.length === 0) return null;
+      return result.value[0];
     } catch (error) {
       console.error("Errore nel recupero del profilo utente:", error);
       return null;
@@ -211,8 +132,9 @@ export class UserProfileService {
   public async getUserManager(userId: string): Promise<any> {
     try {
       const client = await this.getGraphClient();
-      const manager = await client.api(`/users/${userId}/manager`)
-        .select('id,displayName,mail,userPrincipalName,jobTitle')
+      const manager = await client
+        .api(`/users/${userId}/manager`)
+        .select("id,displayName,mail,userPrincipalName,jobTitle")
         .get();
       return manager;
     } catch (error) {
@@ -227,8 +149,9 @@ export class UserProfileService {
   public async getUserDirectReports(userId: string): Promise<any[]> {
     try {
       const client = await this.getGraphClient();
-      const result = await client.api(`/users/${userId}/directReports`)
-        .select('id,displayName,mail,userPrincipalName,jobTitle')
+      const result = await client
+        .api(`/users/${userId}/directReports`)
+        .select("id,displayName,mail,userPrincipalName,jobTitle")
         .get();
       return result.value || [];
     } catch (error) {
@@ -237,7 +160,6 @@ export class UserProfileService {
     }
   }
 }
-
 /*===================================================================================
     PROJECTS SERVICE (con espansione utenti via Graph)
 ====================================================================================*/
@@ -254,7 +176,7 @@ export class ProjectsService {
 
   private async getGraphClient(): Promise<MSGraphClientV3> {
     if (!this.graphClient) {
-      this.graphClient = await this.context.msGraphClientFactory.getClient('3');
+      this.graphClient = await this.context.msGraphClientFactory.getClient("3");
     }
     return this.graphClient;
   }
@@ -265,13 +187,14 @@ export class ProjectsService {
   private async enrichUserData(userId: number, email?: string): Promise<any> {
     try {
       if (!email) return null;
-      
+
       const client = await this.getGraphClient();
-      const result = await client.api('/users')
+      const result = await client
+        .api("/users")
         .filter(`mail eq '${email}' or userPrincipalName eq '${email}'`)
-        .select('id,displayName,mail,userPrincipalName,jobTitle,department')
+        .select("id,displayName,mail,userPrincipalName,jobTitle,department")
         .get();
-      
+
       return result.value && result.value.length > 0 ? result.value[0] : null;
     } catch (error) {
       console.error("Errore nell'arricchimento dati utente:", error);
@@ -303,7 +226,7 @@ export class ProjectsService {
       const enrichedItems = await Promise.all(
         items.map(async (item) => {
           const enrichedItem = { ...item };
-          
+
           if (item.ProjectManager) {
             const graphData = await this.enrichUserData(
               item.ProjectManager.Id,
@@ -383,14 +306,17 @@ export class ProjectsService {
     }
   }
 
-  public async getStatusChoices(): Promise<string[]> {
+  /**
+   * Recupera le opzioni di scelta per un campo di una lista
+   */
+  public async getFieldChoices(listName: string, fieldName: string): Promise<string[]> {
     try {
       const field = await this.sp.web.lists
-        .getByTitle("Projects")
-        .fields.getByInternalNameOrTitle("Status")();
+        .getByTitle(listName)
+        .fields.getByInternalNameOrTitle(fieldName)();
       return field.Choices as string[];
     } catch (error) {
-      console.error("Errore nel recupero delle opzioni Status:", error);
+      console.error(`Errore nel recupero delle opzioni per ${fieldName} in ${listName}:`, error);
       return [];
     }
   }
@@ -414,36 +340,9 @@ export class ProjectsService {
 
 export class DocumentsService {
   private sp: SPFI;
-  private context: WebPartContext;
-  private graphClient: MSGraphClientV3 | null = null;
 
   constructor(context: WebPartContext) {
     this.sp = spfi().using(SPFx(context));
-    this.context = context;
-  }
-
-  private async getGraphClient(): Promise<MSGraphClientV3> {
-    if (!this.graphClient) {
-      this.graphClient = await this.context.msGraphClientFactory.getClient('3');
-    }
-    return this.graphClient;
-  }
-
-  private async enrichUserData(userId: number, email?: string): Promise<any> {
-    try {
-      if (!email) return null;
-      
-      const client = await this.getGraphClient();
-      const result = await client.api('/users')
-        .filter(`mail eq '${email}' or userPrincipalName eq '${email}'`)
-        .select('id,displayName,mail,userPrincipalName,jobTitle,department')
-        .get();
-      
-      return result.value && result.value.length > 0 ? result.value[0] : null;
-    } catch (error) {
-      console.error("Errore nell'arricchimento dati utente:", error);
-      return null;
-    }
   }
 
   public async getDocuments(): Promise<any[]> {
@@ -464,26 +363,7 @@ export class DocumentsService {
         )
         .expand("AssignedTo", "Author", "Editor")();
 
-      // ...existing code...
-
-      // Arricchisci i dati con informazioni da Graph
-      const enrichedItems = await Promise.all(
-        items.map(async (item) => {
-          const enrichedItem = { ...item };
-          
-          if (item.AssignedTo) {
-            const graphData = await this.enrichUserData(
-              item.AssignedTo.Id,
-              item.AssignedTo.EMail
-            );
-            enrichedItem.AssignedToGraph = graphData;
-          }
-
-          return enrichedItem;
-        })
-      );
-
-      return enrichedItems;
+      return items;
     } catch (error) {
       console.error("Errore nel recupero dei documenti:", error);
       throw error;
@@ -527,41 +407,48 @@ export class DocumentsService {
     }
   }
 
-  public async getIssuePurposeChoices(): Promise<string[]> {
-    try {
-      const field = await this.sp.web.lists
-        .getByTitle("Documents")
-        .fields.getByInternalNameOrTitle("IssuePurpose")();
-      return field.Choices as string[];
-    } catch (error) {
-      console.error("Errore nel recupero delle opzioni IssuePurpose:", error);
-      return [];
+      public async updateDocument(
+      itemId: number,
+      document: {
+        DocumentCode: string;
+        Title: string;
+        Revision: string;
+        Status: string;
+        IssuePurpose: string;
+        ApprovalCode: string;
+        SentDate?: string;
+        ExpectedReturnDate?: string;
+        ActualReturnDate?: string;
+        TurnaroundDays?: number;
+        DaysLate?: number;
+        AssignedToId?: number;
+        Notes?: string;
+      }
+    ): Promise<void> {
+      try {
+        await this.sp.web.lists
+          .getByTitle("Documents")
+          .items.getById(itemId)
+          .update({
+            DocumentCode: document.DocumentCode,
+            Title: document.Title,
+            Revision: document.Revision,
+            Status: document.Status,
+            IssuePurpose: document.IssuePurpose,
+            ApprovalCode: document.ApprovalCode,
+            SentDate: document.SentDate,
+            ExpectedReturnDate: document.ExpectedReturnDate,
+            ActualReturnDate: document.ActualReturnDate,
+            TurnaroundDays: document.TurnaroundDays,
+            DaysLate: document.DaysLate,
+            AssignedToId: document.AssignedToId,
+            Notes: document.Notes,
+          });
+      } catch (error) {
+        console.error("Errore durante l'aggiornamento del documento:", error);
+        throw error;
+      }
     }
-  }
-
-  public async getApprovalCodeChoices(): Promise<string[]> {
-    try {
-      const field = await this.sp.web.lists
-        .getByTitle("Documents")
-        .fields.getByInternalNameOrTitle("ApprovalCode")();
-      return field.Choices as string[];
-    } catch (error) {
-      console.error("Errore nel recupero delle opzioni ApprovalCode:", error);
-      return [];
-    }
-  }
-
-  public async getStatusChoices(): Promise<string[]> {
-    try {
-      const field = await this.sp.web.lists
-        .getByTitle("Documents")
-        .fields.getByInternalNameOrTitle("Status")();
-      return field.Choices as string[];
-    } catch (error) {
-      console.error("Errore nel recupero delle opzioni Status:", error);
-      return [];
-    }
-  }
 }
 
 /*===================================================================================
@@ -656,7 +543,7 @@ export class DocumentHistoryService {
 
   private async getGraphClient(): Promise<MSGraphClientV3> {
     if (!this.graphClient) {
-      this.graphClient = await this.context.msGraphClientFactory.getClient('3');
+      this.graphClient = await this.context.msGraphClientFactory.getClient("3");
     }
     return this.graphClient;
   }
@@ -664,13 +551,14 @@ export class DocumentHistoryService {
   private async enrichUserData(userId: number, email?: string): Promise<any> {
     try {
       if (!email) return null;
-      
+
       const client = await this.getGraphClient();
-      const result = await client.api('/users')
+      const result = await client
+        .api("/users")
         .filter(`mail eq '${email}' or userPrincipalName eq '${email}'`)
-        .select('id,displayName,mail,userPrincipalName,jobTitle,department')
+        .select("id,displayName,mail,userPrincipalName,jobTitle,department")
         .get();
-      
+
       return result.value && result.value.length > 0 ? result.value[0] : null;
     } catch (error) {
       console.error("Errore nell'arricchimento dati utente:", error);
@@ -705,7 +593,7 @@ export class DocumentHistoryService {
       const enrichedItems = await Promise.all(
         items.map(async (item) => {
           const enrichedItem = { ...item };
-          
+
           if (item.PerformedBy) {
             const graphData = await this.enrichUserData(
               item.PerformedBy.Id,
@@ -742,7 +630,7 @@ export class AlertsService {
 
   private async getGraphClient(): Promise<MSGraphClientV3> {
     if (!this.graphClient) {
-      this.graphClient = await this.context.msGraphClientFactory.getClient('3');
+      this.graphClient = await this.context.msGraphClientFactory.getClient("3");
     }
     return this.graphClient;
   }
@@ -750,13 +638,14 @@ export class AlertsService {
   private async enrichUserData(userId: number, email?: string): Promise<any> {
     try {
       if (!email) return null;
-      
+
       const client = await this.getGraphClient();
-      const result = await client.api('/users')
+      const result = await client
+        .api("/users")
         .filter(`mail eq '${email}' or userPrincipalName eq '${email}'`)
-        .select('id,displayName,mail,userPrincipalName,jobTitle,department')
+        .select("id,displayName,mail,userPrincipalName,jobTitle,department")
         .get();
-      
+
       return result.value && result.value.length > 0 ? result.value[0] : null;
     } catch (error) {
       console.error("Errore nell'arricchimento dati utente:", error);
@@ -793,7 +682,7 @@ export class AlertsService {
       const enrichedItems = await Promise.all(
         items.map(async (item) => {
           const enrichedItem = { ...item };
-          
+
           if (item.AssignedTo) {
             const graphData = await this.enrichUserData(
               item.AssignedTo.Id,

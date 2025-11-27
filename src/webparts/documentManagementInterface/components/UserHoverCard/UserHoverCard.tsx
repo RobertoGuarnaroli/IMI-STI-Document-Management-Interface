@@ -126,15 +126,10 @@ export const UserHoverCardSmart: React.FC<IUserHoverCardSmartProps> = ({ email, 
     setLoading(true);
     try {
       const usersService = new UsersService(context);
-      const userData = await usersService.getUserByEmail(email);
+      const userData = await usersService.getUserProfileByEmail(email);
       let userPic = pictureUrl;
       try {
-        const userProfileService = new (await import('../../../services/SharePointService')).UserProfileService(context);
-        if (userData && userData.id) {
-          userPic = await userProfileService.getUserProfilePicture(userData.id);
-        } else {
-          userPic = await userProfileService.getUserProfilePicture(email);
-        }
+        userPic = await usersService.getUserProfilePictureByEmail(email);
       } catch {}
       setUser({
         id: userData?.id || email,

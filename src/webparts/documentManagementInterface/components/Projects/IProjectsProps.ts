@@ -19,8 +19,16 @@ export interface IProjectItem{
     Notes?: string;
     Modified?: string;
     Created?: string;
-    CreatedBy?: string;
-    ModifiedBy?: string;
+    CreatedBy:{
+        Id: number;
+        Title: string;
+        Picture?: string;
+    }
+    ModifiedBy:{
+        Id: number;
+        Title: string;
+        Picture?: string;
+    }
     context: unknown;
     isSelected?: boolean;
 }

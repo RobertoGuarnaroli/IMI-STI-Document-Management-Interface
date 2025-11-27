@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { DetailsList, IColumn, DetailsListLayoutMode, ConstrainMode } from '@fluentui/react/lib/DetailsList';
-import { Persona, PersonaSize } from '@fluentui/react/lib/Persona';
-import { DocumentHistoryService } from '../../../services/SharePointService';
+import { DocumentHistoryService, UsersService } from '../../../services/SharePointService';
 import { IDocumentHistoryProps, IDocumentHistoryItem } from './IDocumentHistoryProps';
 import styles from '../../styles/TabStyle.module.scss';
 import { LoadingSpinner } from '../Spinner/Spinner';
+import { UserHoverCardSmart } from '../UserHoverCard/UserHoverCard';
 
 export const DocumentHistory: React.FC<IDocumentHistoryProps> = ({ context }) => {
     const [items, setItems] = React.useState<IDocumentHistoryItem[]>([]);
@@ -13,8 +13,9 @@ export const DocumentHistory: React.FC<IDocumentHistoryProps> = ({ context }) =>
         const fetchDocumentHistory = async (): Promise<void> => {
             try {
                 const service = new DocumentHistoryService(context);
+                const userService = new UsersService(context);
                 const data = await service.getDocumentHistory();
-                const mapped: IDocumentHistoryItem[] = data.map((item) => ({
+                const mapped: IDocumentHistoryItem[] = await Promise.all(data.map(async (item) => ({
                     DocumentId: item.DocumentId?.Id || '',
                     DocumentCode: item.DocumentId?.DocumentCode || '',
                     Revision: item.DocumentId?.Revision || '',
@@ -22,12 +23,13 @@ export const DocumentHistory: React.FC<IDocumentHistoryProps> = ({ context }) =>
                     PerformedBy: item.PerformedBy ? {
                         Id: item.PerformedBy.Id,
                         Title: item.PerformedBy.Title,
-                        Email: item.PerformedBy.EMail
+                        EMail: item.PerformedBy.EMail,
+                        Picture: item.PerformedBy.EMail ? await userService.getUserProfilePictureByEmail(item.PerformedBy.EMail) : undefined
                     } : undefined,
                     ActionDate: item.ActionDate || '',
                     Status: item.Status || '',
                     ApprovalCode: item.ApprovalCode || '', 
-                }));
+                })));
                 setItems(mapped);
                 console.log('Fetched document history:', mapped);
             }
@@ -46,10 +48,6 @@ export const DocumentHistory: React.FC<IDocumentHistoryProps> = ({ context }) =>
         if (isNaN(d.getTime())) return dateStr;
         return d.toLocaleDateString();
     };
-    const getPersonaPhotoUrl = (email?: string) => {
-        if (!email) return undefined;
-        return `https://outlook.office365.com/owa/service.svc/s/GetPersonaPhoto?email=${encodeURIComponent(email)}&size=HR96x96`;
-    };
 
     const columns: IColumn[] = [
         { key: 'DocumentID', name: 'Document ID', fieldName: 'DocumentId', minWidth: 80, maxWidth: 120, isResizable: true },
@@ -63,16 +61,17 @@ export const DocumentHistory: React.FC<IDocumentHistoryProps> = ({ context }) =>
             minWidth: 160,
             maxWidth: 220,
             isResizable: true,
-            onRender: item =>
-                item.PerformedBy ? (
-                    <Persona
-                        text={item.PerformedBy.Title}
-                        imageUrl={getPersonaPhotoUrl(item.PerformedBy.EMail)}
-                        size={PersonaSize.size32}
-                        hidePersonaDetails={false}
-                        secondaryText={item.PerformedBy.EMail}
+            onRender: (item) => {
+                if (!item.PerformedBy.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.PerformedBy.EMail}
+                        displayName={item.PerformedBy.Title}
+                        pictureUrl={item.PerformedBy.Picture}
+                        context={context}
                     />
-                ) : ''
+                );
+            }
         },
         { key: 'ActionDate', name: 'Action Date', fieldName: 'ActionDate', minWidth: 100, maxWidth: 150, isResizable: true, onRender: item => formatDate(item.ActionDate) },
         { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 80, maxWidth: 120, isResizable: true },

@@ -13,7 +13,8 @@ export interface IDocumentHistoryItem {
   PerformedBy?: {
     Id: number;
     Title: string;
-    Email: string;
+    EMail: string;
+    Picture?: string;
   };
   Status: string;
   ApprovalCode: string;

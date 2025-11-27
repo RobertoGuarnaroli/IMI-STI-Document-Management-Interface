@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { DetailsList, IColumn, DetailsListLayoutMode, ConstrainMode } from '@fluentui/react/lib/DetailsList';
-import { DistributionListsService } from '../../../services/SharePointService';
+import { DistributionListsService, UsersService } from '../../../services/SharePointService';
 import { IDistributionListsProps, IDistributionListsItem } from './IDistributionListsProps';
 import styles from '../../styles/TabStyle.module.scss';
 import { LoadingSpinner } from '../Spinner/Spinner';
+import { UserHoverCardSmart } from '../UserHoverCard/UserHoverCard';
 
 export const DistributionLists: React.FC<IDistributionListsProps> = ({ context }) => {
     const [items, setItems] = React.useState<IDistributionListsItem[]>([]);
@@ -12,8 +13,9 @@ export const DistributionLists: React.FC<IDistributionListsProps> = ({ context }
         const fetchDistributionLists = async (): Promise<void> => {
             try {
                 const service = new DistributionListsService(context);
+                const userService = new UsersService(context);
                 const data = await service.getDistributionLists();
-                const mapped: IDistributionListsItem[] = data.map((item) => ({
+                const mapped: IDistributionListsItem[] = await Promise.all(data.map(async (item) => ({
                     ProjectCode: item.ProjectCode.ProjectCode || '',
                     ContactEmail: item.ContactEmail || '',
                     Company: item.Company || '',
@@ -24,9 +26,19 @@ export const DistributionLists: React.FC<IDistributionListsProps> = ({ context }
                     IsActive: item.IsActive || false,
                     Modified: item.Modified || '',
                     Created: item.Created || '',
-                    CreatedBy: item.Author ? { Id: item.Author.Id, Title: item.Author.Title } : undefined,
-                    ModifiedBy: item.Editor ? { Id: item.Editor.Id, Title: item.Editor.Title } : undefined,
-                }));
+                    CreatedBy: {
+                        Id: item.Author ? item.Author.Id : 0,
+                        Title: item.Author ? item.Author.Title : '',
+                        EMail: item.Author?.EMail || undefined,
+                        Picture: item.Author?.EMail ? await userService.getUserProfilePictureByEmail(item.Author.EMail) : undefined
+                    },
+                    ModifiedBy: {
+                        Id: item.Editor ? item.Editor.Id : 0,
+                        Title: item.Editor ? item.Editor.Title : '',
+                        EMail: item.Editor?.EMail || undefined,
+                        Picture: item.Editor?.EMail ? await userService.getUserProfilePictureByEmail(item.Editor.EMail) : undefined
+                    }
+                })));
                 setItems(mapped);
                 console.log('Fetched distribution lists:', mapped);
             } catch (error) {
@@ -52,8 +64,45 @@ export const DistributionLists: React.FC<IDistributionListsProps> = ({ context }
         { key: 'ReceiveNotifications', name: 'Receive Notifications', fieldName: 'ReceiveNotifications', minWidth: 120, maxWidth: 160, isResizable: true, onRender: (item) => item.ReceiveNotifications ? 'Yes' : 'No' },
         { key: 'ReceiveReminders', name: 'Receive Reminders', fieldName: 'ReceiveReminders', minWidth: 120, maxWidth: 160, isResizable: true, onRender: (item) => item.ReceiveReminders ? 'Yes' : 'No' },
         { key: 'IsActive', name: 'Is Active', fieldName: 'IsActive', minWidth: 80, maxWidth: 120, isResizable: true, onRender: (item) => item.IsActive ? 'Yes' : 'No' },
-        { key: 'CreatedBy', name: 'Created By', fieldName: 'CreatedBy', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.CreatedBy ? item.CreatedBy.Title : '' },
-        { key: 'ModifiedBy', name: 'Modified By', fieldName: 'ModifiedBy', minWidth: 120, maxWidth: 200, isResizable: true, onRender: (item) => item.ModifiedBy ? item.ModifiedBy.Title : '' },
+        {
+            key: 'CreatedBy',
+            name: 'Created By',
+            fieldName: 'CreatedBy',
+            minWidth: 120,
+            maxWidth: 200,
+            isResizable: true,
+            onRender: (item) => {
+                if (!item.CreatedBy.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.CreatedBy.EMail}
+                        displayName={item.CreatedBy.Title}
+                        pictureUrl={item.CreatedBy.Picture}
+                        context={context}
+                    />
+                );
+            }
+        },
+
+        {
+            key: 'ModifiedBy',
+            name: 'Modified By',
+            fieldName: 'ModifiedBy',
+            minWidth: 120,
+            maxWidth: 200,
+            isResizable: true,
+            onRender: (item) => {
+                if (!item.ModifiedBy.EMail) return '';
+                return (
+                    <UserHoverCardSmart
+                        email={item.ModifiedBy.EMail}
+                        displayName={item.ModifiedBy.Title}
+                        pictureUrl={item.ModifiedBy.Picture}
+                        context={context}
+                    />
+                );
+            }
+        },
         { key: 'Modified', name: 'Modified', fieldName: 'Modified', onRender: (item) => formatDate(item.Modified), minWidth: 100, maxWidth: 140, isResizable: true },
     ];
 

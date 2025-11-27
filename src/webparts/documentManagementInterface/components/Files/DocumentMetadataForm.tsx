@@ -3,7 +3,7 @@ import { IDocumentMetadataProps, IDocumentMetadataFormProps } from './IDocumentM
 import { TextField, Stack, Dropdown, IDropdownOption, MessageBar } from '@fluentui/react';
 import { ModalContainer } from '../ModalContainer/ModalContainer';
 import { PeoplePicker } from '../PeoplePicker/PeoplePicker';
-import { DocumentsService, UsersService } from '../../../services/SharePointService';
+import { UsersService, ChoiceFieldService } from '../../../services/SharePointService';
 
 
 
@@ -40,8 +40,8 @@ export const DocumentMetadataForm: React.FC<IDocumentMetadataFormProps> = ({
     // Load Status choices
     const fetchStatusChoices = async () => {
       try {
-        const documentsService = new DocumentsService(context);
-        const choices = await documentsService.getStatusChoices();
+        const choiceFieldService = new ChoiceFieldService(context);
+        const choices = await choiceFieldService.getFieldChoices("Documents", "Status");
         setStatusOptions(choices.map((c: string) => ({ key: c, text: c })));
       } catch {
         setStatusOptions([]);
@@ -50,8 +50,8 @@ export const DocumentMetadataForm: React.FC<IDocumentMetadataFormProps> = ({
     // Load IssuePurpose choices
     const fetchIssuePurposeChoices = async () => {
       try {
-        const documentsService = new DocumentsService(context);
-        const choices = await documentsService.getIssuePurposeChoices();
+        const choiceFieldService = new ChoiceFieldService(context);
+        const choices = await choiceFieldService.getFieldChoices("Documents", "IssuePurpose");
         setIssuePurposeOptions(choices.map((c: string) => ({ key: c, text: c })));
       } catch {
         setIssuePurposeOptions([]);
@@ -60,8 +60,8 @@ export const DocumentMetadataForm: React.FC<IDocumentMetadataFormProps> = ({
     // Load ApprovalCode choices
     const fetchApprovalCodeChoices = async () => {
       try {
-        const documentsService = new DocumentsService(context);
-        const choices = await documentsService.getApprovalCodeChoices();
+        const choiceFieldService = new ChoiceFieldService(context);
+        const choices = await choiceFieldService.getFieldChoices("Documents", "ApprovalCode");
         setApprovalCodeOptions(choices.map((c: string) => ({ key: c, text: c })));
       } catch {
         setApprovalCodeOptions([]);
